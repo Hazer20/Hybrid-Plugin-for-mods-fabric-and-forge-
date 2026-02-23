@@ -7,7 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DatapackBridgeService {
     private static final int MC_121_PACK_FORMAT = 61;
@@ -15,9 +17,13 @@ public class DatapackBridgeService {
     private final JavaPlugin plugin;
     private final McFunctionTransformer transformer;
 
-    public DatapackBridgeService(JavaPlugin plugin) {
+    public DatapackBridgeService(JavaPlugin plugin, Map<String, String> extraReplacements) {
         this.plugin = plugin;
-        this.transformer = new McFunctionTransformer(BridgeRuleSet.defaultCommandReplacements());
+
+        Map<String, String> allReplacements = new LinkedHashMap<>(BridgeRuleSet.defaultCommandReplacements());
+        allReplacements.putAll(extraReplacements);
+
+        this.transformer = new McFunctionTransformer(allReplacements);
     }
 
     public BridgeResult bridge(Path sourceDatapack, Path outputDatapack) throws IOException {
@@ -47,7 +53,7 @@ public class DatapackBridgeService {
                         transformedFiles.add(target);
                     } else if ("pack.mcmeta".equals(fileName)) {
                         String contents = Files.readString(path, StandardCharsets.UTF_8);
-                        contents = contents.replace("\"pack_format\": 26", "\"pack_format\": " + MC_121_PACK_FORMAT);
+                        contents = contents.replaceAll("\"pack_format\"\\s*:\\s*\\d+", "\"pack_format\": " + MC_121_PACK_FORMAT);
                         Files.writeString(target, contents, StandardCharsets.UTF_8);
                     } else {
                         Files.copy(path, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);

@@ -6,10 +6,19 @@
 
 - читает папку `world/datapacks/Sanguine` (по умолчанию);
 - копирует её в `world/datapacks/Sanguine_121_bridge`;
-- обновляет `pack.mcmeta` до формата 1.21.8;
-- применяет набор replacement-правил к `.mcfunction` файлам (ключевые несовместимости между 1.20.4 и 1.21.8).
+- обновляет `pack.mcmeta` до `pack_format` для 1.21.8;
+- применяет набор replacement-правил к `.mcfunction` файлам (частые несовместимости между 1.20.4 и 1.21.8);
+- позволяет добавить **свои** правила в `config.yml` через `extra-replacements`.
 
 Исходный датапак не изменяется.
+
+## Важно про "все команды"
+
+Автоматически покрыть *абсолютно все* несовместимости любых datapack-команд невозможно без полноценного парсера + ручной валидации конкретного Sanguine.
+
+Поэтому в плагине есть:
+- широкий дефолтный набор частых замен;
+- расширение через `extra-replacements`, чтобы закрыть именно ваши команды/пути/functions/ids.
 
 ## Настройка
 
@@ -19,15 +28,19 @@
 source-datapack: Sanguine
 output-datapack: Sanguine_121_bridge
 world-name: world
+
+extra-replacements:
+  "sanguine:old/path": "sanguine:new/path"
+  "generic.flying_speed": "minecraft:generic.flying_speed"
 ```
 
-## Сборка
+## Сборка через Maven
 
 ```bash
-./gradlew build
+mvn -q clean package
 ```
 
-Готовый jar: `build/libs/sanguine-datapack-bridge-1.0.0.jar`
+Готовый jar: `target/sanguine-datapack-bridge-1.0.1.jar`
 
 ## Запуск
 
@@ -38,6 +51,5 @@ world-name: world
 
 ## Расширение правил
 
-Файл: `src/main/java/dev/sanguine/bridge/BridgeRuleSet.java`
-
-Добавляй новые replacement-правила, если в Sanguine есть другие несовместимые ID/пути команд.
+- Базовые правила: `src/main/java/dev/sanguine/bridge/BridgeRuleSet.java`
+- Ваши точечные правила: `config.yml -> extra-replacements`

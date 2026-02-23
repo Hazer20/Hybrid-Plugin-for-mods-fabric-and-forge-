@@ -1,5 +1,5 @@
 name: SanguineBridge
-version: 1.0.0
+version: '${project.version}'
 main: dev.sanguine.bridge.SanguineBridgePlugin
 api-version: '1.21'
 author: Codex

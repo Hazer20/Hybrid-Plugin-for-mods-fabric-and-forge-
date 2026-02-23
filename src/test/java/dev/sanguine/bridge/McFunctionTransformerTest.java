@@ -19,4 +19,10 @@ class McFunctionTransformerTest {
         String transformed = transformer.transformLine("attribute @s generic.max_health base set 40");
         assertEquals("attribute @s minecraft:generic.max_health base set 40", transformed);
     }
+
+    @Test
+    void keepsBlankLineUntouched() {
+        McFunctionTransformer transformer = new McFunctionTransformer(Map.of("a", "b"));
+        assertEquals("", transformer.transformLine(""));
+    }
 }

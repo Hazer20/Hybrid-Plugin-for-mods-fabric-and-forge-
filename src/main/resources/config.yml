@@ -6,3 +6,9 @@ output-datapack: Sanguine_121_bridge
 
 # World folder name that contains datapacks
 world-name: world
+
+# Add your own replacements for exact IDs/paths from your Sanguine build.
+# Format: "old_text": "new_text"
+extra-replacements:
+  # "sanguine:old/path": "sanguine:new/path"
+  # "generic.flying_speed": "minecraft:generic.flying_speed"
