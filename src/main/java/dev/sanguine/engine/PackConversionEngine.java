@@ -6,9 +6,7 @@ import dev.sanguine.engine.report.ConversionReport;
 import dev.sanguine.engine.resource.ResourcePackConverter;
 import dev.sanguine.engine.transpile.DatapackConverter;
 import dev.sanguine.engine.validation.PackValidator;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -16,138 +14,145 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class PackConversionEngine {
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private final JavaPlugin plugin;
     private final PackWorkspace workspace;
-    private final ConversionLogger conversionLogger;
-    private final ConversionReport report;
+    private final ExecutorService ioExecutor;
+    private final ConversionLogger logger;
 
     public PackConversionEngine(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.conversionLogger = new ConversionLogger(plugin);
-        this.report = new ConversionReport();
-
         Path root = plugin.getDataFolder().toPath();
         this.workspace = new PackWorkspace(
             root,
-            root.resolve("input_datapack"),
-            root.resolve("input_resourcepack"),
-            root.resolve("generated_datapack"),
-            root.resolve("generated_resourcepack"),
-            root.resolve("tmp_datapack"),
-            root.resolve("tmp_resourcepack"),
-            root.resolve("generated_datapack.zip"),
-            root.resolve("generated_resourcepack.zip")
+            root.resolve("input/datapacks"),
+            root.resolve("input/resourcepacks"),
+            root.resolve("generated/datapacks"),
+            root.resolve("generated/resourcepacks"),
+            root.resolve("temp"),
+            root.resolve("backup"),
+            root.resolve("backup/unsupported"),
+            root.resolve("logs"),
+            root.resolve("conversion-report.txt")
         );
+        this.ioExecutor = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
+        this.logger = new ConversionLogger(plugin, workspace.logs());
     }
 
     public void prepareDirectories() {
         try {
-            Files.createDirectories(workspace.inputDatapack());
-            Files.createDirectories(workspace.inputResourcepack());
-            Files.createDirectories(workspace.generatedDatapack());
-            Files.createDirectories(workspace.generatedResourcepack());
-            Files.createDirectories(workspace.tmpDatapack());
-            Files.createDirectories(workspace.tmpResourcepack());
+            Files.createDirectories(workspace.inputDatapacks());
+            Files.createDirectories(workspace.inputResourcepacks());
+            Files.createDirectories(workspace.generatedDatapacks());
+            Files.createDirectories(workspace.generatedResourcepacks());
+            Files.createDirectories(workspace.temp());
+            Files.createDirectories(workspace.backup());
+            Files.createDirectories(workspace.unsupported());
+            Files.createDirectories(workspace.logs());
         } catch (IOException e) {
-            conversionLogger.error("Cannot create engine directories", e);
+            logger.error("Cannot create workspace directories", e);
         }
     }
 
-    public void runConversion() {
-        try {
-            backupInputs();
-            ArchiveUtils.cleanDirectory(workspace.tmpDatapack());
-            ArchiveUtils.cleanDirectory(workspace.tmpResourcepack());
-            ArchiveUtils.cleanDirectory(workspace.generatedDatapack());
-            ArchiveUtils.cleanDirectory(workspace.generatedResourcepack());
-
-            ArchiveUtils.unpackInput(workspace.inputDatapack(), workspace.tmpDatapack());
-            ArchiveUtils.unpackInput(workspace.inputResourcepack(), workspace.tmpResourcepack());
-
-            new DatapackConverter(conversionLogger, report).convert(workspace.tmpDatapack(), workspace.generatedDatapack());
-            new ResourcePackConverter(conversionLogger, report).convert(workspace.tmpResourcepack(), workspace.generatedResourcepack());
-
-            new PackValidator(conversionLogger).validate(workspace.generatedDatapack(), report);
-            new PackValidator(conversionLogger).validate(workspace.generatedResourcepack(), report);
-
-            ArchiveUtils.zipDirectory(workspace.generatedDatapack(), workspace.generatedDatapackZip());
-            ArchiveUtils.zipDirectory(workspace.generatedResourcepack(), workspace.generatedResourcepackZip());
-
-            installGeneratedDatapack();
-            scheduleResourcePackSend();
-            writeReport();
-        } catch (Exception exception) {
-            conversionLogger.error("SanguineCompatibilityEngine conversion failed", exception);
-        }
+    public void convertAllAsync(CommandSender sender) {
+        CompletableFuture.runAsync(() -> convertAll(sender), ioExecutor)
+            .exceptionally(ex -> {
+                logger.error("Async conversion crashed", ex);
+                if (sender != null) sender.sendMessage("§c[HybridConverter] Conversion crashed: " + ex.getMessage());
+                return null;
+            });
     }
 
-    private void backupInputs() {
+    public void convertAll(CommandSender sender) {
+        ConversionReport report = new ConversionReport();
         try {
-            Path backupRoot = workspace.pluginRoot().resolve("backup").resolve(TS.format(LocalDateTime.now()));
-            Files.createDirectories(backupRoot);
-            ArchiveUtils.copyTree(workspace.inputDatapack(), backupRoot.resolve("input_datapack"));
-            ArchiveUtils.copyTree(workspace.inputResourcepack(), backupRoot.resolve("input_resourcepack"));
-            report.converted("backup-created:" + backupRoot);
+            if (sender != null) sender.sendMessage("§e[HybridConverter] Starting conversion...");
+            backupInputs(report);
+
+            ArchiveUtils.cleanDirectory(workspace.generatedDatapacks());
+            ArchiveUtils.cleanDirectory(workspace.generatedResourcepacks());
+
+            convertDatapacks(report);
+            convertResourcepacks(report);
+
+            PackValidator validator = new PackValidator(logger);
+            validator.validate(workspace.generatedDatapacks(), report);
+            validator.validate(workspace.generatedResourcepacks(), report);
+
+            report.writeTo(workspace.reportFile());
+            if (sender != null) sender.sendMessage("§a[HybridConverter] Conversion finished. Report: " + workspace.reportFile());
         } catch (Exception ex) {
-            conversionLogger.warn("Backup creation failed: " + ex.getMessage());
+            logger.error("Conversion failed", ex);
+            if (sender != null) sender.sendMessage("§c[HybridConverter] Conversion failed: " + ex.getMessage());
         }
     }
 
-    private void installGeneratedDatapack() throws IOException {
-        String worldName = plugin.getConfig().getString("engine.world-name", "world");
-        World world = Bukkit.getWorld(worldName);
-        if (world == null) {
-            conversionLogger.warn("World " + worldName + " is not loaded; datapack installation skipped.");
-            return;
-        }
-
-        Path worldDatapacks = world.getWorldFolder().toPath().resolve("datapacks").resolve("generated_datapack");
-        ArchiveUtils.cleanDirectory(worldDatapacks);
-        ArchiveUtils.copyTree(workspace.generatedDatapack(), worldDatapacks);
-
-        if (plugin.getConfig().getBoolean("engine.auto-reload-datapacks", true)) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "minecraft:reload");
-        }
-    }
-
-    private void scheduleResourcePackSend() {
-        String url = plugin.getConfig().getString("engine.resource-pack-url", "");
-        String sha1 = plugin.getConfig().getString("engine.resource-pack-sha1", "");
-        if (sha1 != null && !sha1.isBlank()) {
-            report.manual("resource-pack-sha1 configured but Paper API path uses URL-only setResourcePack in this build.");
-        }
-
-        if (url == null || url.isBlank()) {
-            conversionLogger.warn("resource-pack-url is empty. Host generated_resourcepack.zip and set URL.");
-            report.manual("Set engine.resource-pack-url to deliver generated resource pack.");
-            return;
-        }
-
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                player.setResourcePack(url);
-            }
-        });
-    }
-
-    private void writeReport() {
+    private void backupInputs(ConversionReport report) {
         try {
-            report.writeTo(workspace.pluginRoot().resolve("conversion-report.txt"));
-            report.writeTo(Path.of("plugins", "HybridConverter", "logs", "conversion-report.txt"));
-        } catch (IOException e) {
-            conversionLogger.warn("Cannot write conversion report: " + e.getMessage());
+            Path stamp = workspace.backup().resolve(TS.format(LocalDateTime.now()));
+            Files.createDirectories(stamp);
+            ArchiveUtils.copyTree(workspace.inputDatapacks(), stamp.resolve("input_datapacks"));
+            ArchiveUtils.copyTree(workspace.inputResourcepacks(), stamp.resolve("input_resourcepacks"));
+            report.converted("backup: " + stamp);
+        } catch (Exception ex) {
+            logger.warn("Backup failed: " + ex.getMessage());
+            report.manual("Backup failed: " + ex.getMessage());
         }
+    }
+
+    private void convertDatapacks(ConversionReport report) throws IOException {
+        DatapackConverter converter = new DatapackConverter(logger, report, ioExecutor);
+        try (var packs = Files.list(workspace.inputDatapacks())) {
+            packs.filter(Files::isDirectory).forEach(packDir -> {
+                try {
+                    Path target = workspace.generatedDatapacks().resolve(packDir.getFileName().toString());
+                    converter.convert(packDir, target, workspace.unsupported());
+                    report.converted("datapack folder: " + packDir.getFileName());
+                } catch (Exception ex) {
+                    logger.warn("Datapack conversion failed: " + packDir + " -> " + ex.getMessage());
+                    report.incompatible("datapack failed: " + packDir);
+                }
+            });
+        }
+    }
+
+    private void convertResourcepacks(ConversionReport report) throws IOException {
+        ResourcePackConverter converter = new ResourcePackConverter(logger, report, ioExecutor);
+        Path tempUnpackRoot = workspace.temp().resolve("resourcepacks");
+        ArchiveUtils.cleanDirectory(tempUnpackRoot);
+
+        try (var zips = Files.list(workspace.inputResourcepacks())) {
+            zips.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".zip"))
+                .forEach(zip -> {
+                    try {
+                        Path unpacked = tempUnpackRoot.resolve(stripZipExt(zip.getFileName().toString()));
+                        Files.createDirectories(unpacked);
+                        ArchiveUtils.unzip(zip, unpacked);
+
+                        Path generatedFolder = workspace.generatedResourcepacks().resolve(stripZipExt(zip.getFileName().toString()));
+                        Path generatedZip = workspace.generatedResourcepacks().resolve(zip.getFileName().toString());
+                        converter.convert(unpacked, generatedFolder, workspace.unsupported(), generatedZip);
+                        report.converted("resourcepack zip: " + zip.getFileName());
+                    } catch (Exception ex) {
+                        logger.warn("Resourcepack conversion failed: " + zip + " -> " + ex.getMessage());
+                        report.incompatible("resourcepack failed: " + zip.getFileName());
+                    }
+                });
+        }
+    }
+
+    private String stripZipExt(String name) {
+        return name.endsWith(".zip") ? name.substring(0, name.length() - 4) : name;
     }
 
     public void shutdown() {
-        conversionLogger.info("SanguineCompatibilityEngine disabled.");
-    }
-
-    public PackWorkspace workspace() {
-        return workspace;
+        ioExecutor.shutdownNow();
+        logger.info("HybridConverter disabled");
     }
 }

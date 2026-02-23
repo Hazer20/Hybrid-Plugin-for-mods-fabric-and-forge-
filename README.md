@@ -1,60 +1,45 @@
-# SanguineCompatibilityEngine
+# HybridConverter (Paper 1.21.8)
 
-Production-oriented Paper plugin for automatic datapack + resource pack conversion from **1.20.4** to **1.21.8**.
+Автор: **Hazer_2_0**  
+Разработка: **Notepad++**  
+Сборка: **Maven**  
+Java: **21**
 
-- Plugin: `SanguineCompatibilityEngine`
-- Author: `Hazer_2_0`
-- Build: Maven
-- Java: 21
-- Target: Paper / Spigot 1.21.8
+Плагин автоматически конвертирует:
+- datapack (папки) из `/plugins/HybridConverter/input/datapacks/`
+- resourcepack (ZIP) из `/plugins/HybridConverter/input/resourcepacks/`
 
-## Startup flow
+в формат Minecraft **1.21.8** с генерацией в:
+- `/plugins/HybridConverter/generated/datapacks/`
+- `/plugins/HybridConverter/generated/resourcepacks/`
 
-On server startup the engine:
+## Команда
 
-1. Creates folders:
-   - `plugins/SanguineCompatibilityEngine/input_datapack/`
-   - `plugins/SanguineCompatibilityEngine/input_resourcepack/`
-   - `plugins/SanguineCompatibilityEngine/generated_datapack/`
-   - `plugins/SanguineCompatibilityEngine/generated_resourcepack/`
-2. Creates timestamped backup in `plugins/SanguineCompatibilityEngine/backup/<timestamp>/`.
-3. Unpacks zip/folder inputs with `ZipInputStream`.
-4. Converts datapack/resourcepack using parser + AST + translation layer.
-5. Runs validation pass for JSON/resource consistency.
-6. Writes:
-   - `plugins/SanguineCompatibilityEngine/conversion-report.txt`
-   - `plugins/HybridConverter/logs/conversion.log`
-   - `plugins/HybridConverter/logs/conversion-report.txt`
-7. Installs generated datapack and reloads datapacks (optional).
+- `/convertpack` — запустить полную конвертацию асинхронно.
 
-## Safety guarantees
+## Что делает конвертер
 
-- Invalid JSON is skipped with warning (no startup crash).
-- Unknown/invalid files are moved into `generated_*/unsupported/`.
-- Converters are wrapped with failsafe logging.
-- NBT-like command fragments get recovery attempt for brace mismatch.
-- Conversion and validation issues are written to report and log.
+- Асинхронно читает и распаковывает входные файлы.
+- Делает backup исходников в `/plugins/HybridConverter/backup/<timestamp>/`.
+- Локальный AI-модуль (offline rule engine) переводит legacy-ключи, включая:
+  - `location_minecraft:predicate -> location_predicate`
+  - `input_minecraft:predicate -> input_predicate`
+  - `surface_minecraft:structures -> structures`
+  - `minecraft:structures -> structures`
+- Обновляет `pack.mcmeta` (`pack_format`), predicates, loot tables, advancements, recipes, blockstates, models.
+- Конвертирует item model overrides в новую схему `minecraft:select` + `minecraft:custom_model_data`.
+- Невалидные/неизвестные JSON файлы переносит в `/plugins/HybridConverter/backup/unsupported/`.
+- Ведёт лог ошибок в `/plugins/HybridConverter/logs/conversion.log`.
+- Формирует отчёт `/plugins/HybridConverter/conversion-report.txt`.
 
-## Build
+## Сборка
 
 ```bash
 mvn clean package
 ```
 
-Output jar:
+JAR:
 
 ```text
-target/sanguine-compatibility-engine-2.0.0.jar
+target/hybrid-converter-2.0.0.jar
 ```
-
-## Config
-
-```yaml
-engine:
-  world-name: world
-  auto-reload-datapacks: true
-  resource-pack-url: ""
-  resource-pack-sha1: ""
-```
-
-Set `resource-pack-url` to hosted `generated_resourcepack.zip` to auto-send the pack to online players.

@@ -3,14 +3,15 @@ package dev.sanguine.engine;
 import java.nio.file.Path;
 
 public record PackWorkspace(
-    Path pluginRoot,
-    Path inputDatapack,
-    Path inputResourcepack,
-    Path generatedDatapack,
-    Path generatedResourcepack,
-    Path tmpDatapack,
-    Path tmpResourcepack,
-    Path generatedDatapackZip,
-    Path generatedResourcepackZip
+    Path root,
+    Path inputDatapacks,
+    Path inputResourcepacks,
+    Path generatedDatapacks,
+    Path generatedResourcepacks,
+    Path temp,
+    Path backup,
+    Path unsupported,
+    Path logs,
+    Path reportFile
 ) {
 }

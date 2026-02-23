@@ -1,25 +1,20 @@
 package dev.sanguine.engine;
 
-import dev.sanguine.engine.runtime.RuntimeItemBridgeListener;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Legacy entry kept only for backward compatibility with older jars/configs.
+ */
 public class SanguineCompatibilityEnginePlugin extends JavaPlugin {
     private PackConversionEngine engine;
 
     @Override
     public void onEnable() {
-        try {
-            saveDefaultConfig();
-            engine = new PackConversionEngine(this);
-            engine.prepareDirectories();
-            engine.runConversion();
-
-            getServer().getPluginManager().registerEvents(new RuntimeItemBridgeListener(this), this);
-            getLogger().info("SanguineCompatibilityEngine enabled.");
-        } catch (Exception ex) {
-            getLogger().severe("SanguineCompatibilityEngine startup protection caught error: " + ex.getMessage());
-        }
+        engine = new PackConversionEngine(this);
+        engine.prepareDirectories();
+        engine.convertAllAsync(getServer().getConsoleSender());
+        getLogger().warning("Using legacy main class. Please switch to HybridConverterPlugin.");
     }
 
     @Override

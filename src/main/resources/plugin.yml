@@ -1,6 +1,14 @@
-name: SanguineCompatibilityEngine
+name: HybridConverter
 version: '${project.version}'
-main: dev.sanguine.engine.SanguineCompatibilityEnginePlugin
+main: dev.sanguine.engine.HybridConverterPlugin
 api-version: '1.21'
 author: Hazer_2_0
-description: Full datapack/resourcepack transpilation engine from 1.20.4 to 1.21.8.
+description: Local AI converter for datapacks and resourcepacks 1.20.4 -> 1.21.8.
+commands:
+  convertpack:
+    description: Convert all datapacks/resourcepacks from input to generated folders.
+    usage: /convertpack
+    permission: hybridconverter.convert
+permissions:
+  hybridconverter.convert:
+    default: op

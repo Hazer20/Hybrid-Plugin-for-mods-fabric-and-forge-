@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class ConversionLogger {
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -15,11 +16,11 @@ public class ConversionLogger {
     private final JavaPlugin plugin;
     private final Path file;
 
-    public ConversionLogger(JavaPlugin plugin) {
-        this.plugin = plugin;
-        this.file = Path.of("plugins", "HybridConverter", "logs", "conversion.log");
+    public ConversionLogger(JavaPlugin plugin, Path logsDir) {
+        this.plugin = Objects.requireNonNull(plugin, "plugin");
+        this.file = logsDir.resolve("conversion.log");
         try {
-            Files.createDirectories(file.getParent());
+            Files.createDirectories(logsDir);
         } catch (IOException e) {
             plugin.getLogger().warning("Cannot create conversion log directory: " + e.getMessage());
         }
@@ -38,8 +39,7 @@ public class ConversionLogger {
     }
 
     private void write(String level, String message, Throwable throwable) {
-        String prefix = "[" + TS.format(LocalDateTime.now()) + "] [" + level + "] ";
-        String body = prefix + message + System.lineSeparator();
+        String body = "[" + TS.format(LocalDateTime.now()) + "] [" + level + "] " + message + System.lineSeparator();
         try {
             Files.writeString(file, body, StandardCharsets.UTF_8,
                 java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
@@ -48,15 +48,12 @@ public class ConversionLogger {
                     java.nio.file.StandardOpenOption.APPEND);
             }
         } catch (IOException ignored) {
-            // keep server startup safe
         }
 
-        if ("ERROR".equals(level)) {
-            plugin.getLogger().severe(message);
-        } else if ("WARN".equals(level)) {
-            plugin.getLogger().warning(message);
-        } else {
-            plugin.getLogger().info(message);
+        switch (level) {
+            case "ERROR" -> plugin.getLogger().severe(message);
+            case "WARN" -> plugin.getLogger().warning(message);
+            default -> plugin.getLogger().info(message);
         }
     }
 

@@ -21,25 +21,17 @@ public class VersionTranslationLayer {
     }
 
     public void translateLootTable(JsonObject root) {
-        if (!root.has("pools") || !root.get("pools").isJsonArray()) {
-            return;
-        }
-        JsonArray pools = root.getAsJsonArray("pools");
-        for (JsonElement poolEl : pools) {
-            if (!poolEl.isJsonObject()) {
-                continue;
-            }
+        if (!root.has("pools") || !root.get("pools").isJsonArray()) return;
+        for (JsonElement poolEl : root.getAsJsonArray("pools")) {
+            if (!poolEl.isJsonObject()) continue;
             JsonObject pool = poolEl.getAsJsonObject();
             if (pool.has("functions") && pool.get("functions").isJsonArray()) {
                 for (JsonElement fnEl : pool.getAsJsonArray("functions")) {
-                    if (fnEl.isJsonObject()) {
-                        JsonObject fn = fnEl.getAsJsonObject();
-                        if (fn.has("function") && fn.get("function").isJsonPrimitive()) {
-                            String function = fn.get("function").getAsString();
-                            if (!function.contains(":")) {
-                                fn.addProperty("function", "minecraft:" + function);
-                            }
-                        }
+                    if (!fnEl.isJsonObject()) continue;
+                    JsonObject fn = fnEl.getAsJsonObject();
+                    if (fn.has("function") && fn.get("function").isJsonPrimitive()) {
+                        String function = fn.get("function").getAsString();
+                        if (!function.contains(":")) fn.addProperty("function", "minecraft:" + function);
                     }
                 }
             }
@@ -47,17 +39,13 @@ public class VersionTranslationLayer {
     }
 
     public void translateAdvancement(JsonObject root) {
-        if (!root.has("criteria") || !root.get("criteria").isJsonObject()) {
-            return;
-        }
+        if (!root.has("criteria") || !root.get("criteria").isJsonObject()) return;
         JsonObject criteria = root.getAsJsonObject("criteria");
         for (String key : criteria.keySet()) {
             JsonObject criterion = criteria.getAsJsonObject(key);
             if (criterion.has("trigger") && criterion.get("trigger").isJsonPrimitive()) {
                 String trigger = criterion.get("trigger").getAsString();
-                if (!trigger.contains(":")) {
-                    criterion.addProperty("trigger", "minecraft:" + trigger);
-                }
+                if (!trigger.contains(":")) criterion.addProperty("trigger", "minecraft:" + trigger);
             }
         }
     }
@@ -71,34 +59,29 @@ public class VersionTranslationLayer {
     }
 
     public void translateBlockstate(JsonObject root) {
-        if (root.has("multipart") && root.get("multipart").isJsonArray()) {
-            for (JsonElement element : root.getAsJsonArray("multipart")) {
-                if (element.isJsonObject()) {
-                    JsonObject obj = element.getAsJsonObject();
-                    if (obj.has("when") && obj.get("when").isJsonPrimitive()) {
-                        JsonObject when = new JsonObject();
-                        when.addProperty("state", obj.get("when").getAsString());
-                        obj.add("when", when);
-                    }
-                }
+        if (!root.has("multipart") || !root.get("multipart").isJsonArray()) return;
+        JsonArray multipart = root.getAsJsonArray("multipart");
+        for (JsonElement element : multipart) {
+            if (!element.isJsonObject()) continue;
+            JsonObject obj = element.getAsJsonObject();
+            if (obj.has("when") && obj.get("when").isJsonPrimitive()) {
+                JsonObject when = new JsonObject();
+                when.addProperty("state", obj.get("when").getAsString());
+                obj.add("when", when);
             }
         }
     }
 
     public void translateModel(JsonObject root) {
         if (root.has("overrides") && root.get("overrides").isJsonArray()) {
-            // kept for dedicated converter; existence marks legacy style
             root.addProperty("_legacy_overrides_detected", true);
         }
     }
 
     public String translateCommand(String line) {
-        if (line.startsWith("attribute ")) {
-            return line.replace(" generic.", " minecraft:generic.");
-        }
-        if (line.contains("CustomModelData:")) {
-            return line + " # custom_model_data_review";
-        }
-        return line;
+        String out = line;
+        if (out.startsWith("attribute ")) out = out.replace(" generic.", " minecraft:generic.");
+        if (out.contains("CustomModelData:")) out = out.replace("CustomModelData:", "custom_model_data:");
+        return out;
     }
 }
