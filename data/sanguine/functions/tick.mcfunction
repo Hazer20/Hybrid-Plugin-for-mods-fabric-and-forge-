@@ -23,6 +23,9 @@ execute as @a[scores={sg.role=2}] run function sanguine:player/hunter_tick
 
 # Custom mobs AI wrappers
 function sanguine:mobs/tick
+function sanguine:boss/phase_tick
+function sanguine:loot/collect_tick
+function sanguine:lore/reveal_tick
 
 # Passive cooldown tick
 scoreboard players remove @a[scores={sg.cooldown=1..}] sg.cooldown 1

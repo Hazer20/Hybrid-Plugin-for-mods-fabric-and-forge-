@@ -19,14 +19,17 @@ function sanguine:player/abilities/purge
 function sanguine:ritual/create_ward
 function sanguine:rituals/channel_blood
 
-# Stage 3: world, mobs and blocks
+# Stage 3: world, mobs, bosses, loot, lore
 function sanguine:blocks/create_ritual_altar
 function sanguine:admin/tests/force_bloodmoon
 function sanguine:admin/tests/spawn_all_mobs
+function sanguine:boss/phase_tick
+function sanguine:loot/collect_tick
+function sanguine:lore/reveal_tick
 function sanguine:admin/tests/run_smoke
 
-# Cleanup role
-function sanguine:ritual/cure
-function sanguine:ritual/remove_ward
+# Stage 4: admin tools sanity
+function sanguine:admin/tools/reset_player
+function sanguine:admin/tools/cleanup_entities
 
-tellraw @s {"text":"[Sanguine] Полный test_all_features выполнен: ритуалы/мобы/оружие/ивенты проверены.","color":"green"}
+tellraw @s {"text":"[Sanguine] Полный test_all_features выполнен: события/мобы/ритуалы/лут/лор/инструменты проверены.","color":"green"}
