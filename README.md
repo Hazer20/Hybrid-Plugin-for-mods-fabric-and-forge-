@@ -1,65 +1,44 @@
 # Hybrid-Plugin-for-mods-fabric-and-forge-
 
-## Sanguine Legacy Datapack Port (1.21.8) — Ultimate Edition+
+## Sanguine Legacy Datapack Port (1.21.8) — Ultimate Edition++
 
-Максимально расширенный datapack-порт Sanguine: кровавые луны, эскалация волн, фазы боссов, кастом-мобы, ритуалы, прогрессия, лут, лор-ивенты, оружие и админ-утилиты.
+Расширенный datapack-порт Sanguine с кровавыми лунами, волнами монстров, ритуалами, прогрессией, лором и мостом для интеграции с плагином.
 
-## Ограничение формата datapack
+## Исправления по вашим замечаниям
 
-Datapack не создаёт реальные новые Java-регистры сущностей/предметов/блоков как Forge/Fabric-мод.
+1. **"неизвестная задача/команда"**
+   - Добавлен авто-enable trigger каждый тик: теперь `/trigger sg.trigger set X` работает стабильно без ручного `scoreboard players enable`.
+   - Добавлен алиас команды: `/function sanguine:ritual/channel_blood` (раньше была только `rituals/channel_blood`).
 
-Вместо этого реализовано:
-- кастом-мобы: ванильные мобы + теги + атрибуты + эффекты + отдельный tick-AI;
-- кастом-оружие: компоненты предметов (имя/лоры/зачары);
-- ритуальные блоки: построение алтарей из ванильных блоков + маркеры + логика функции.
+2. **Интеграция datapack + plugin**
+   - Добавлен мост `sanguine:bridge` через `storage`:
+     - Экспорт мира: `world.bloodmoon`, `world.wave`, `world.moon_time`
+     - Экспорт состояния последнего игрока: `last_player.*`
+     - Импорт флагов от плагина: `flags.force_bloodmoon`, `flags.global_cleanup`
 
-## Что добавлено сверх предыдущей версии
+## Быстрые команды
 
-- Фазы боссов кровавой луны (P2/P3) с усилениями и визуальными эффектами.
-- Лут-система за убийства волн (`sg.kills`) с ритуальными материалами.
-- Лор-раскрытие по рангу (3/6/9) через tellraw-события.
-- Новые админ-утилиты:
-  - reset профиля игрока
-  - очистка всех datapack-сущностей
+- `/function sanguine:admin/help`
+- `/function sanguine:ritual/channel_blood` (алиас)
+- `/trigger sg.trigger set 1..8`
 
-## Игровые команды
+## Контракт интеграции для плагина
 
-- `/function sanguine:ritual/embrace`
-- `/function sanguine:ritual/cure`
-- `/function sanguine:admin/become_hunter`
-- `/function sanguine:ritual/feed`
-- `/function sanguine:ritual/infect_target`
-- `/function sanguine:ritual/create_ward`
-- `/function sanguine:ritual/remove_ward`
-- `/function sanguine:blocks/create_ritual_altar`
-- `/function sanguine:items/give_vampire_kit`
-- `/function sanguine:items/give_hunter_kit`
+Плагин может читать/писать `storage sanguine:bridge`:
 
-## Триггеры
+- Чтение (datapack -> plugin):
+  - `world.bloodmoon`
+  - `world.wave`
+  - `world.moon_time`
+  - `last_player.role`, `last_player.blood`, `last_player.thirst`, `last_player.rank`
 
-- `/trigger sg.trigger set 1` — форма
-- `/trigger sg.trigger set 2` — укус
-- `/trigger sg.trigger set 3` — скан
-- `/trigger sg.trigger set 4` — туманная поступь
-- `/trigger sg.trigger set 5` — удар колом
-- `/trigger sg.trigger set 6` — кровавая клятва
-- `/trigger sg.trigger set 7` — очищение
-- `/trigger sg.trigger set 8` — канал крови
+- Запись (plugin -> datapack):
+  - `flags.force_bloodmoon:1` — форсировать кровавую луну
+  - `flags.global_cleanup:1` — очистить кастомные сущности
 
-## Админ-команды
+## Пример цикла плагина
 
-- `/function sanguine:admin/tests/grant_admin`
-- `/function sanguine:admin/tests/setup_vampire`
-- `/function sanguine:admin/tests/setup_hunter`
-- `/function sanguine:admin/tests/fill_resources`
-- `/function sanguine:admin/tests/force_bloodmoon`
-- `/function sanguine:admin/tests/spawn_all_mobs`
-- `/function sanguine:admin/tests/run_smoke`
-- `/function sanguine:admin/tests/test_all_features`
-- `/function sanguine:admin/tools/reset_player`
-- `/function sanguine:admin/tools/cleanup_entities`
+1. Раз в тик/секунду считывать `storage sanguine:bridge`.
+2. При условии сервера писать нужные `flags.*`.
+3. Datapack автоматически подхватывает флаги в `sanguine:bridge/import_flags`.
 
-## Быстрый полный прогон
-
-1. `/function sanguine:admin/tests/grant_admin`
-2. `/function sanguine:admin/tests/test_all_features`

@@ -35,6 +35,9 @@ scoreboard players remove @a[scores={sg.test_cd=1..}] sg.test_cd 1
 # UI
 execute as @a run function sanguine:ui/actionbar
 
+# Plugin bridge + trigger enable
+function sanguine:bridge/tick
+
 # Trigger bindings (/trigger sg.trigger set X)
 execute as @a[scores={sg.trigger=1,sg.role=1}] run function sanguine:player/toggle_form
 execute as @a[scores={sg.trigger=2,sg.role=1}] run function sanguine:player/abilities/bite
