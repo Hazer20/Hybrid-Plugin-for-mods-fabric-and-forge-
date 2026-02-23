@@ -1,44 +1,66 @@
 # Hybrid-Plugin-for-mods-fabric-and-forge-
 
-## Sanguine Legacy Datapack Port (1.21.8) — Ultimate Edition++
+## Sanguine Legacy Datapack + SanguineBridge Plugin (1.21.8)
 
-Расширенный datapack-порт Sanguine с кровавыми лунами, волнами монстров, ритуалами, прогрессией, лором и мостом для интеграции с плагином.
+Теперь проект содержит **и datapack, и plugin-мост** для стабильной работы «на 900%»:
+- datapack отвечает за механики, ритуалы, волны, роли и события;
+- plugin автоматизирует сервисные команды, помогает с `/trigger`, и управляет bridge-флагами.
 
-## Исправления по вашим замечаниям
+## Что исправлено по проблемам
 
-1. **"неизвестная задача/команда"**
-   - Добавлен авто-enable trigger каждый тик: теперь `/trigger sg.trigger set X` работает стабильно без ручного `scoreboard players enable`.
-   - Добавлен алиас команды: `/function sanguine:ritual/channel_blood` (раньше была только `rituals/channel_blood`).
+1. Ошибки вида «неизвестная задача/команда» при `/trigger`:
+- datapack: auto-enable `sg.trigger` каждый тик;
+- plugin: на join и по таймеру дополнительно включает `sg.trigger`.
 
-2. **Интеграция datapack + plugin**
-   - Добавлен мост `sanguine:bridge` через `storage`:
-     - Экспорт мира: `world.bloodmoon`, `world.wave`, `world.moon_time`
-     - Экспорт состояния последнего игрока: `last_player.*`
-     - Импорт флагов от плагина: `flags.force_bloodmoon`, `flags.global_cleanup`
+2. Связка datapack c plugin:
+- `storage sanguine:bridge` используется как API-контракт;
+- plugin пишет флаги (`force_bloodmoon`, `global_cleanup`), datapack их читает и выполняет;
+- datapack экспортирует world/player snapshot, plugin может читать и логировать.
 
-## Быстрые команды
+## Установка
 
-- `/function sanguine:admin/help`
-- `/function sanguine:ritual/channel_blood` (алиас)
-- `/trigger sg.trigger set 1..8`
+### Datapack
+1. Положить репозиторий в `<world>/datapacks/sanguine_legacy/`
+2. Выполнить `/reload`
 
-## Контракт интеграции для плагина
+### Plugin
+1. Собрать jar:
+   - `cd plugin`
+   - `mvn -DskipTests package`
+2. Взять `plugin/target/sanguine-bridge-1.0.0.jar`
+3. Положить в папку `plugins/` Paper-сервера
+4. Перезапустить сервер
 
-Плагин может читать/писать `storage sanguine:bridge`:
+## Команда плагина
 
-- Чтение (datapack -> plugin):
+- `/sanguinebridge status` — вывести состояние bridge
+- `/sanguinebridge forcebloodmoon` — форс-флаг кровавой луны
+- `/sanguinebridge cleanup` — очистить кастомные сущности
+- `/sanguinebridge reloadpack` — reload + reinit datapack
+- `/sanguinebridge smoketest` — прогон тестов для онлайн-админов
+- `/sanguinebridge enabletriggers` — принудительно включить trigger
+
+Алиасы: `/sgbridge`, `/sgb`
+
+## Контракт bridge storage
+
+Путь: `storage sanguine:bridge`
+
+- datapack -> plugin:
   - `world.bloodmoon`
   - `world.wave`
   - `world.moon_time`
-  - `last_player.role`, `last_player.blood`, `last_player.thirst`, `last_player.rank`
+  - `last_player.role`
+  - `last_player.blood`
+  - `last_player.thirst`
+  - `last_player.rank`
 
-- Запись (plugin -> datapack):
-  - `flags.force_bloodmoon:1` — форсировать кровавую луну
-  - `flags.global_cleanup:1` — очистить кастомные сущности
+- plugin -> datapack:
+  - `flags.force_bloodmoon:1`
+  - `flags.global_cleanup:1`
 
-## Пример цикла плагина
+## Быстрый запуск
 
-1. Раз в тик/секунду считывать `storage sanguine:bridge`.
-2. При условии сервера писать нужные `flags.*`.
-3. Datapack автоматически подхватывает флаги в `sanguine:bridge/import_flags`.
-
+1. `/function sanguine:admin/help`
+2. `/sanguinebridge reloadpack`
+3. `/sanguinebridge smoketest`

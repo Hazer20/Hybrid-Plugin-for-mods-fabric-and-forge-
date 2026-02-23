@@ -1,0 +1,14 @@
+name: SanguineBridge
+version: 1.0.0
+main: dev.sanguine.bridge.SanguineBridgePlugin
+api-version: '1.21'
+author: Codex
+commands:
+  sanguinebridge:
+    description: Sanguine datapack bridge commands
+    usage: /sanguinebridge <status|forcebloodmoon|cleanup|reloadpack|smoketest|enabletriggers>
+    permission: sanguine.bridge.admin
+    aliases: [sgbridge, sgb]
+permissions:
+  sanguine.bridge.admin:
+    default: op
