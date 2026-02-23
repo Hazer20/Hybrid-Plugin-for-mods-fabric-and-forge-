@@ -14,11 +14,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class RuntimeItemBridgeListener implements Listener {
-    private final JavaPlugin plugin;
     private final NamespacedKey legacyFlag;
 
     public RuntimeItemBridgeListener(JavaPlugin plugin) {
-        this.plugin = plugin;
         this.legacyFlag = new NamespacedKey(plugin, "legacy_sanguine_item");
     }
 

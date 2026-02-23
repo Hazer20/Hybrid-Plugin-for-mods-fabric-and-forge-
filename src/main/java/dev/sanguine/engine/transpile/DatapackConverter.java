@@ -4,29 +4,37 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.sanguine.engine.log.ConversionLogger;
 import dev.sanguine.engine.pack.ArchiveUtils;
 import dev.sanguine.engine.parser.McFunctionParser;
-import org.bukkit.plugin.java.JavaPlugin;
+import dev.sanguine.engine.report.ConversionReport;
+import dev.sanguine.engine.translation.VersionTranslationLayer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
 public class DatapackConverter {
     private static final int DATAPACK_1218_FORMAT = 61;
 
-    private final JavaPlugin plugin;
     private final McFunctionParser parser = new McFunctionParser();
     private final CommandTranspiler transpiler = new CommandTranspiler();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final VersionTranslationLayer translationLayer = new VersionTranslationLayer();
+    private final ConversionLogger logger;
+    private final ConversionReport report;
 
-    public DatapackConverter(JavaPlugin plugin) {
-        this.plugin = plugin;
+    public DatapackConverter(ConversionLogger logger, ConversionReport report) {
+        this.logger = logger;
+        this.report = report;
     }
 
     public void convert(Path sourceRoot, Path outRoot) throws IOException {
         ArchiveUtils.copyTree(sourceRoot, outRoot);
+        Path unsupportedDir = outRoot.resolve("unsupported");
+        Files.createDirectories(unsupportedDir);
 
         try (var paths = Files.walk(outRoot)) {
             paths.filter(Files::isRegularFile).forEach(file -> {
@@ -36,44 +44,119 @@ public class DatapackConverter {
                         transpileMcFunction(file);
                     } else if (name.equals("pack.mcmeta")) {
                         rewritePackMeta(file, DATAPACK_1218_FORMAT);
-                    } else if (isDatapackJson(file)) {
-                        normalizeDatapackJson(file);
+                    } else if (name.endsWith(".json")) {
+                        processDatapackJson(file, unsupportedDir);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    report.skipped("datapack:" + outRoot.relativize(file));
+                    logger.warn("Datapack file skipped: " + file + " -> " + e.getMessage());
                 }
             });
         }
 
-        plugin.getLogger().info("Datapack transpilation completed for " + outRoot);
+        logger.info("Datapack transpilation completed for " + outRoot);
     }
 
     private void transpileMcFunction(Path file) throws IOException {
         var lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        var out = lines.stream()
-            .map(line -> transpiler.transpile(parser.parseLine(line)))
-            .toList();
+        var out = lines.stream().map(this::safeTranspileLine).toList();
         Files.write(file, out, StandardCharsets.UTF_8);
+        report.converted("mcfunction:" + file);
+    }
+
+    private String safeTranspileLine(String line) {
+        String recovered = attemptNbtRecovery(line);
+        String translated = translationLayer.translateCommand(recovered);
+        String output = transpiler.transpile(parser.parseLine(translated));
+        if (!line.equals(output)) {
+            report.fixed("command:" + line + " -> " + output);
+        }
+        if (line.startsWith("execute ") || line.startsWith("damage ") || line.startsWith("attribute ")) {
+            report.deprecated("legacy-pattern command seen: " + line);
+        }
+        return output;
+    }
+
+    private String attemptNbtRecovery(String line) {
+        long open = line.chars().filter(c -> c == '{').count();
+        long close = line.chars().filter(c -> c == '}').count();
+        if (open <= close) {
+            return line;
+        }
+        StringBuilder recovered = new StringBuilder(line);
+        for (long i = 0; i < (open - close); i++) {
+            recovered.append('}');
+        }
+        report.fixed("nbt-recovery:" + line);
+        return recovered.toString();
     }
 
     private void rewritePackMeta(Path file, int packFormat) throws IOException {
-        JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
-        JsonObject pack = root.has("pack") ? root.getAsJsonObject("pack") : new JsonObject();
-        pack.addProperty("pack_format", packFormat);
-        root.add("pack", pack);
-        Files.writeString(file, gson.toJson(root), StandardCharsets.UTF_8);
-    }
-
-    private boolean isDatapackJson(Path file) {
-        String path = file.toString().replace('\\', '/');
-        return path.contains("/predicates/") || path.contains("/loot_tables/") || path.contains("/advancements/") || path.contains("/damage_type/");
-    }
-
-    private void normalizeDatapackJson(Path file) throws IOException {
-        JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
-        if (root.has("type") && !root.get("type").getAsString().contains(":")) {
-            root.addProperty("type", "minecraft:" + root.get("type").getAsString());
+        JsonObject root = safeParseJson(file);
+        if (root == null) {
+            return;
         }
+        translationLayer.translatePackMeta(root, packFormat);
         Files.writeString(file, gson.toJson(root), StandardCharsets.UTF_8);
+        report.fixed("pack.mcmeta updated: " + file);
+    }
+
+    private void processDatapackJson(Path file, Path unsupportedDir) throws IOException {
+        JsonObject root = safeParseJson(file);
+        if (root == null) {
+            moveToUnsupported(file, unsupportedDir);
+            return;
+        }
+
+        String path = file.toString().replace('\\', '/');
+        if (path.contains("/predicates/")) {
+            translationLayer.translatePredicate(root);
+        }
+        if (path.contains("/loot_tables/")) {
+            translationLayer.translateLootTable(root);
+        }
+        if (path.contains("/advancements/")) {
+            translationLayer.translateAdvancement(root);
+        }
+        if (path.contains("/recipes/")) {
+            translationLayer.translateRecipe(root);
+        }
+        if (path.contains("/tags/")) {
+            report.fixed("tags checked: " + file);
+        }
+
+        if (root.has("type") && root.get("type").isJsonPrimitive()) {
+            String type = root.get("type").getAsString();
+            if (!type.contains(":")) {
+                root.addProperty("type", "minecraft:" + type);
+                report.fixed("namespace fixed in: " + file);
+            }
+        }
+
+        Files.writeString(file, gson.toJson(root), StandardCharsets.UTF_8);
+        report.converted("json:" + file);
+    }
+
+    private JsonObject safeParseJson(Path file) {
+        try {
+            String content = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return Files.readString(file, StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).join();
+            return JsonParser.parseString(content).getAsJsonObject();
+        } catch (Exception ex) {
+            report.incompatible("Invalid JSON: " + file);
+            logger.warn("Invalid JSON skipped: " + file + " -> " + ex.getMessage());
+            return null;
+        }
+    }
+
+    private void moveToUnsupported(Path file, Path unsupportedDir) throws IOException {
+        Path target = unsupportedDir.resolve(file.getFileName().toString());
+        Files.move(file, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        report.skipped("unsupported-json:" + file);
     }
 }

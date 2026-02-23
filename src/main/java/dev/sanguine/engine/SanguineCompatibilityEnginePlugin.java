@@ -9,13 +9,17 @@ public class SanguineCompatibilityEnginePlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
-        engine = new PackConversionEngine(this);
-        engine.prepareDirectories();
-        engine.runConversion();
+        try {
+            saveDefaultConfig();
+            engine = new PackConversionEngine(this);
+            engine.prepareDirectories();
+            engine.runConversion();
 
-        getServer().getPluginManager().registerEvents(new RuntimeItemBridgeListener(this), this);
-        getLogger().info("SanguineCompatibilityEngine enabled.");
+            getServer().getPluginManager().registerEvents(new RuntimeItemBridgeListener(this), this);
+            getLogger().info("SanguineCompatibilityEngine enabled.");
+        } catch (Exception ex) {
+            getLogger().severe("SanguineCompatibilityEngine startup protection caught error: " + ex.getMessage());
+        }
     }
 
     @Override

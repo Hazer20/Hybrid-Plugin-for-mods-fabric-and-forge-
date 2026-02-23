@@ -1,29 +1,39 @@
 # SanguineCompatibilityEngine
 
-Production-ready PaperMC plugin for **automatic datapack + resourcepack transpilation** from **1.20.4** to **1.21.8**.
+Production-oriented Paper plugin for automatic datapack + resource pack conversion from **1.20.4** to **1.21.8**.
 
-- Plugin name: `SanguineCompatibilityEngine`
+- Plugin: `SanguineCompatibilityEngine`
 - Author: `Hazer_2_0`
-- Build system: **Maven**
-- Java: **21**
+- Build: Maven
+- Java: 21
+- Target: Paper / Spigot 1.21.8
 
-## What the engine does
+## Startup flow
 
-On server startup:
+On server startup the engine:
 
-1. Creates directories:
+1. Creates folders:
    - `plugins/SanguineCompatibilityEngine/input_datapack/`
    - `plugins/SanguineCompatibilityEngine/input_resourcepack/`
    - `plugins/SanguineCompatibilityEngine/generated_datapack/`
    - `plugins/SanguineCompatibilityEngine/generated_resourcepack/`
-2. Unpacks zip/folder sources with `ZipInputStream`.
-3. Runs full conversion pipeline:
-   - datapack command AST parser + command transpiler;
-   - JSON converters for predicates/loot/advancements/damage_type;
-   - resourcepack `models/item/*` override migration to `assets/minecraft/items/*.json` with `minecraft:select` and `minecraft:custom_model_data`.
-4. Writes generated packs and zip archives.
-5. Installs generated datapack into world `datapacks/` and runs `/minecraft:reload`.
-6. Enables runtime compatibility listeners for item behavior bridging.
+2. Creates timestamped backup in `plugins/SanguineCompatibilityEngine/backup/<timestamp>/`.
+3. Unpacks zip/folder inputs with `ZipInputStream`.
+4. Converts datapack/resourcepack using parser + AST + translation layer.
+5. Runs validation pass for JSON/resource consistency.
+6. Writes:
+   - `plugins/SanguineCompatibilityEngine/conversion-report.txt`
+   - `plugins/HybridConverter/logs/conversion.log`
+   - `plugins/HybridConverter/logs/conversion-report.txt`
+7. Installs generated datapack and reloads datapacks (optional).
+
+## Safety guarantees
+
+- Invalid JSON is skipped with warning (no startup crash).
+- Unknown/invalid files are moved into `generated_*/unsupported/`.
+- Converters are wrapped with failsafe logging.
+- NBT-like command fragments get recovery attempt for brace mismatch.
+- Conversion and validation issues are written to report and log.
 
 ## Build
 
@@ -31,20 +41,20 @@ On server startup:
 mvn clean package
 ```
 
-Jar output:
+Output jar:
 
 ```text
 target/sanguine-compatibility-engine-2.0.0.jar
 ```
 
-## Runtime resource-pack delivery
-
-Set in `plugins/SanguineCompatibilityEngine/config.yml`:
+## Config
 
 ```yaml
 engine:
-  resource-pack-url: "https://your-cdn/generated_resourcepack.zip"
+  world-name: world
+  auto-reload-datapacks: true
+  resource-pack-url: ""
   resource-pack-sha1: ""
 ```
 
-The engine generates `generated_resourcepack.zip`; host it on HTTP(S) and configure the URL.
+Set `resource-pack-url` to hosted `generated_resourcepack.zip` to auto-send the pack to online players.
