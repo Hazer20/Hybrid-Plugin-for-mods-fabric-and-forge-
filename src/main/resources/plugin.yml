@@ -1,0 +1,6 @@
+name: SanguineBridge
+version: 1.0.0
+main: dev.sanguine.bridge.SanguineBridgePlugin
+api-version: '1.21'
+author: Codex
+description: Bridges Sanguine datapack from 1.20.4 format to 1.21.8 output at server startup.
