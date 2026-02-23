@@ -20,4 +20,12 @@ public class McFunctionTransformer {
         }
         return transformed;
     }
+
+    public String transformText(String text) {
+        String transformed = text;
+        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+            transformed = transformed.replace(entry.getKey(), entry.getValue());
+        }
+        return transformed;
+    }
 }

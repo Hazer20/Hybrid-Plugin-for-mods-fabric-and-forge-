@@ -25,4 +25,11 @@ class McFunctionTransformerTest {
         McFunctionTransformer transformer = new McFunctionTransformer(Map.of("a", "b"));
         assertEquals("", transformer.transformLine(""));
     }
+
+    @Test
+    void transformsWholeTextContent() {
+        McFunctionTransformer transformer = new McFunctionTransformer(Map.of("generic.armor", "minecraft:generic.armor"));
+        String transformed = transformer.transformText("{\"attribute\":\"generic.armor\"}");
+        assertEquals("{\"attribute\":\"minecraft:generic.armor\"}", transformed);
+    }
 }

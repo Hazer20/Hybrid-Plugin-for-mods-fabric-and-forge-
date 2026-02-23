@@ -24,7 +24,7 @@ public class SanguineBridgePlugin extends JavaPlugin {
         DatapackBridgeService bridgeService = new DatapackBridgeService(this, readExtraReplacements());
 
         try {
-            BridgeResult result = bridgeService.bridge(sourceDatapack, outputDatapack);
+            DatapackBridgeReport result = bridgeService.bridge(sourceDatapack, outputDatapack);
             bridgeService.logResult(result);
             getLogger().info("Reload datapacks with /minecraft:reload after startup.");
         } catch (Exception exception) {
