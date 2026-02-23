@@ -1,50 +1,50 @@
-# Sanguine Datapack Bridge (1.20.4 -> 1.21.8)
+# SanguineCompatibilityEngine
 
-Плагин создаёт **мост-датапак** для сервера 1.21.8 из исходного датапака Sanguine, который остаётся в формате 1.20.4.
+Production-ready PaperMC plugin for **automatic datapack + resourcepack transpilation** from **1.20.4** to **1.21.8**.
 
-## Что делает теперь (полный проход по датапаку)
+- Plugin name: `SanguineCompatibilityEngine`
+- Author: `Hazer_2_0`
+- Build system: **Maven**
+- Java: **21**
 
-- полностью сканирует все папки и файлы внутри исходного datapack;
-- копирует структуру 1:1 в `world/datapacks/Sanguine_121_bridge`;
-- для текстовых файлов (`.mcfunction`, `.json`, `.mcmeta`, `.txt`) применяет миграционные правила;
-- для `pack.mcmeta` автоматически ставит `pack_format` для 1.21.8;
-- логирует предупреждения, если после миграции остались legacy-токены;
-- исходный datapack остаётся нетронутым.
+## What the engine does
 
-## Важно
+On server startup:
 
-Полностью автоматический порт "до последнего символа" для любого кастомного datapack без ручных правил невозможен, потому что кастомные механики могут иметь произвольные id/структуры.
+1. Creates directories:
+   - `plugins/SanguineCompatibilityEngine/input_datapack/`
+   - `plugins/SanguineCompatibilityEngine/input_resourcepack/`
+   - `plugins/SanguineCompatibilityEngine/generated_datapack/`
+   - `plugins/SanguineCompatibilityEngine/generated_resourcepack/`
+2. Unpacks zip/folder sources with `ZipInputStream`.
+3. Runs full conversion pipeline:
+   - datapack command AST parser + command transpiler;
+   - JSON converters for predicates/loot/advancements/damage_type;
+   - resourcepack `models/item/*` override migration to `assets/minecraft/items/*.json` with `minecraft:select` and `minecraft:custom_model_data`.
+4. Writes generated packs and zip archives.
+5. Installs generated datapack into world `datapacks/` and runs `/minecraft:reload`.
+6. Enables runtime compatibility listeners for item behavior bridging.
 
-Поэтому реализовано максимально близко к «полному порту»:
-- полный скан всех файлов;
-- авто-замены по широкому набору дефолтных правил;
-- доп. ваши правила через `extra-replacements`.
-
-## Настройка
-
-`plugins/SanguineBridge/config.yml`
-
-```yml
-source-datapack: Sanguine
-output-datapack: Sanguine_121_bridge
-world-name: world
-
-extra-replacements:
-  "sanguine:old/path": "sanguine:new/path"
-  "generic.flying_speed": "minecraft:generic.flying_speed"
-```
-
-## Сборка через Maven
+## Build
 
 ```bash
-mvn -q clean package
+mvn clean package
 ```
 
-Готовый jar: `target/sanguine-datapack-bridge-1.0.1.jar`
+Jar output:
 
-## Запуск
+```text
+target/sanguine-compatibility-engine-2.0.0.jar
+```
 
-1. Положи jar в `plugins/` сервера Paper 1.21.8.
-2. Убедись, что исходный датапак есть в `world/datapacks/Sanguine`.
-3. Запусти сервер.
-4. После старта выполни `/minecraft:reload`.
+## Runtime resource-pack delivery
+
+Set in `plugins/SanguineCompatibilityEngine/config.yml`:
+
+```yaml
+engine:
+  resource-pack-url: "https://your-cdn/generated_resourcepack.zip"
+  resource-pack-sha1: ""
+```
+
+The engine generates `generated_resourcepack.zip`; host it on HTTP(S) and configure the URL.

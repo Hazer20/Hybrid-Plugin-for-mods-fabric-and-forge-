@@ -1,6 +1,6 @@
-name: SanguineBridge
+name: SanguineCompatibilityEngine
 version: '${project.version}'
-main: dev.sanguine.bridge.SanguineBridgePlugin
+main: dev.sanguine.engine.SanguineCompatibilityEnginePlugin
 api-version: '1.21'
-author: Codex
-description: Bridges Sanguine datapack from 1.20.4 format to 1.21.8 output at server startup.
+author: Hazer_2_0
+description: Full datapack/resourcepack transpilation engine from 1.20.4 to 1.21.8.

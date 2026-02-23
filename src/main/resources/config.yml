@@ -1,14 +1,5 @@
-# Existing 1.20.4 datapack folder name inside world/datapacks
-source-datapack: Sanguine
-
-# Generated 1.21.8-compatible datapack folder
-output-datapack: Sanguine_121_bridge
-
-# World folder name that contains datapacks
-world-name: world
-
-# Add your own replacements for exact IDs/paths from your Sanguine build.
-# Format: "old_text": "new_text"
-extra-replacements:
-  # "sanguine:old/path": "sanguine:new/path"
-  # "generic.flying_speed": "minecraft:generic.flying_speed"
+engine:
+  world-name: world
+  auto-reload-datapacks: true
+  resource-pack-url: ""
+  resource-pack-sha1: ""
