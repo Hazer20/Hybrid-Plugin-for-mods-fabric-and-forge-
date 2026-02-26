@@ -1,0 +1,4 @@
+converter:
+  auto-convert-on-startup: true
+  datapack-pack-format: 61
+  resourcepack-pack-format: 46
