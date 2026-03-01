@@ -1,0 +1,6 @@
+name: FreezePlugin
+version: 1.0.0
+main: me.yourname.freezeplugin.FreezePlugin
+api-version: '1.20'
+author: yourname
+description: Cold and freezing balance plugin with heart-style freeze indicator.
