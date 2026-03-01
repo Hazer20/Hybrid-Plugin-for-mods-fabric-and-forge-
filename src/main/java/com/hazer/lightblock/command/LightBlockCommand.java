@@ -24,12 +24,12 @@ public class LightBlockCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command.");
+            sender.sendMessage("Только игрок может использовать эту команду.");
             return true;
         }
 
         if (!player.hasPermission("lightblock.use")) {
-            player.sendMessage(Component.text("You don't have permission.", NamedTextColor.RED));
+            player.sendMessage(Component.text("У вас нет прав на эту команду.", NamedTextColor.RED));
             return true;
         }
 
@@ -38,13 +38,13 @@ public class LightBlockCommand implements CommandExecutor, TabCompleter {
             try {
                 level = Integer.parseInt(args[0]);
             } catch (NumberFormatException ignored) {
-                player.sendMessage(Component.text("Invalid level. Use 1-15.", NamedTextColor.RED));
+                player.sendMessage(Component.text("Неверный уровень. Используйте числа от 1 до 15.", NamedTextColor.RED));
                 return true;
             }
         }
 
         if (level < 1 || level > 15) {
-            player.sendMessage(Component.text("Level must be between 1 and 15.", NamedTextColor.RED));
+            player.sendMessage(Component.text("Уровень должен быть от 1 до 15.", NamedTextColor.RED));
             return true;
         }
 

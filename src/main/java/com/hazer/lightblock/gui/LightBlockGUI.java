@@ -6,6 +6,7 @@ import com.hazer.lightblock.recipe.RecipeManager;
 import com.hazer.lightblock.recipe.RecipeManager.RecipeRequirement;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -24,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 public class LightBlockGUI implements Listener {
+
+    private static final String GUI_TITLE_PREFIX = "Крафт светоблоков";
 
     private static final int SLOT_PREVIOUS = 45;
     private static final int SLOT_CRAFT = 49;
@@ -51,7 +55,7 @@ public class LightBlockGUI implements Listener {
 
     private Inventory buildInventory(Player player, int level) {
         Inventory inv = Bukkit.createInventory(player, 54,
-                Component.text("Light Block Crafting [" + itemManager.toRoman(level) + "]", NamedTextColor.DARK_AQUA));
+                Component.text(GUI_TITLE_PREFIX + " [" + itemManager.toRoman(level) + "]", NamedTextColor.DARK_AQUA));
         fillBackground(inv);
         inv.setItem(SLOT_RESULT, itemManager.createLightBlockItem(level, 1));
 
@@ -65,8 +69,8 @@ public class LightBlockGUI implements Listener {
         int maxCraftable = recipeManager.getCraftableAmount(player, level);
         inv.setItem(SLOT_QUANTITY_INFO, buildQuantityInfo(maxCraftable));
         inv.setItem(SLOT_CRAFT, buildCraftButton(level, maxCraftable));
-        inv.setItem(SLOT_PREVIOUS, navButton("Previous Level", level > 1));
-        inv.setItem(SLOT_NEXT, navButton("Next Level", level < 15));
+        inv.setItem(SLOT_PREVIOUS, navButton("Предыдущий уровень", level > 1));
+        inv.setItem(SLOT_NEXT, navButton("Следующий уровень", level < 15));
         return inv;
     }
 
@@ -87,8 +91,8 @@ public class LightBlockGUI implements Listener {
 
         ItemMeta meta = stack.getItemMeta();
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("Required: " + requirement.amount(), NamedTextColor.YELLOW));
-        lore.add(Component.text(hasEnough ? "Status: READY" : "Status: MISSING",
+        lore.add(Component.text("Нужно: " + requirement.amount(), NamedTextColor.YELLOW));
+        lore.add(Component.text(hasEnough ? "Статус: ХВАТАЕТ" : "Статус: НЕ ХВАТАЕТ",
                 hasEnough ? NamedTextColor.GREEN : NamedTextColor.RED));
         meta.lore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
@@ -99,8 +103,8 @@ public class LightBlockGUI implements Listener {
     private ItemStack buildQuantityInfo(int maxCraftable) {
         ItemStack info = new ItemStack(maxCraftable > 0 ? Material.LIME_DYE : Material.RED_DYE);
         ItemMeta meta = info.getItemMeta();
-        meta.displayName(Component.text("Craftable Quantity", NamedTextColor.AQUA));
-        meta.lore(List.of(Component.text("You can craft: " + maxCraftable, NamedTextColor.WHITE)));
+        meta.displayName(Component.text("Доступно для крафта", NamedTextColor.AQUA));
+        meta.lore(List.of(Component.text("Можно создать: " + maxCraftable, NamedTextColor.WHITE)));
         info.setItemMeta(meta);
         return info;
     }
@@ -108,8 +112,8 @@ public class LightBlockGUI implements Listener {
     private ItemStack buildCraftButton(int level, int maxCraftable) {
         ItemStack craft = new ItemStack(maxCraftable > 0 ? Material.EMERALD : Material.BARRIER);
         ItemMeta meta = craft.getItemMeta();
-        meta.displayName(Component.text("Craft Light Block " + itemManager.toRoman(level), NamedTextColor.GOLD));
-        meta.lore(List.of(Component.text("Will craft: " + maxCraftable, NamedTextColor.WHITE)));
+        meta.displayName(Component.text("Создать светоблок " + itemManager.toRoman(level), NamedTextColor.GOLD));
+        meta.lore(List.of(Component.text("Количество: " + maxCraftable, NamedTextColor.WHITE)));
         craft.setItemMeta(meta);
         return craft;
     }
@@ -127,11 +131,16 @@ public class LightBlockGUI implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !selectedLevels.containsKey(player)) {
             return;
         }
-        if (event.getClickedInventory() == null || event.getClickedInventory() != event.getView().getTopInventory()) {
+        if (!isLightBlockView(event.getView().title())) {
             return;
         }
 
         event.setCancelled(true);
+
+        if (event.getClickedInventory() == null || event.getClickedInventory() != event.getView().getTopInventory()) {
+            return;
+        }
+
         int level = selectedLevels.get(player);
         int slot = event.getRawSlot();
 
@@ -151,12 +160,12 @@ public class LightBlockGUI implements Listener {
 
         int craftable = recipeManager.getCraftableAmount(player, level);
         if (craftable <= 0) {
-            player.sendMessage(Component.text("You do not have enough resources.", NamedTextColor.RED));
+            player.sendMessage(Component.text("Недостаточно ресурсов для крафта.", NamedTextColor.RED));
             return;
         }
 
         if (!recipeManager.consumeForCraft(player, level, craftable)) {
-            player.sendMessage(Component.text("Crafting failed due to inventory changes. Try again.", NamedTextColor.RED));
+            player.sendMessage(Component.text("Крафт не выполнен: инвентарь изменился. Попробуйте снова.", NamedTextColor.RED));
             return;
         }
 
@@ -164,9 +173,16 @@ public class LightBlockGUI implements Listener {
         Map<Integer, ItemStack> leftover = player.getInventory().addItem(crafted);
         leftover.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
 
-        player.sendMessage(Component.text("Crafted " + craftable + "x Light Block " + itemManager.toRoman(level) + "!",
+        player.sendMessage(Component.text("Создано " + craftable + "x Световой блок " + itemManager.toRoman(level) + "!",
                 NamedTextColor.GREEN));
         Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(buildInventory(player, level)));
+    }
+
+    @EventHandler
+    public void onGuiDrag(InventoryDragEvent event) {
+        if (isLightBlockView(event.getView().title())) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
@@ -174,6 +190,10 @@ public class LightBlockGUI implements Listener {
         if (event.getPlayer() instanceof Player player) {
             selectedLevels.remove(player);
         }
+    }
+
+    private boolean isLightBlockView(Component title) {
+        return title != null && PlainTextComponentSerializer.plainText().serialize(title).contains(GUI_TITLE_PREFIX);
     }
 
     private int countInInventory(Player player, ItemStack prototype) {

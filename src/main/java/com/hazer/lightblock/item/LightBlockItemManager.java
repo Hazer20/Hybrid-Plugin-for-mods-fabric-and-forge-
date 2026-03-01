@@ -25,10 +25,10 @@ public class LightBlockItemManager {
         ItemStack item = new ItemStack(Material.LIGHT, Math.max(1, amount));
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(Component.text("Light Block " + toRoman(safeLevel), NamedTextColor.GOLD));
+        meta.displayName(Component.text("Световой блок " + toRoman(safeLevel), NamedTextColor.GOLD));
         meta.lore(List.of(
-                Component.text("Invisible light source", NamedTextColor.GRAY),
-                Component.text("Emits light level: " + safeLevel, NamedTextColor.YELLOW)
+                Component.text("Невидимый источник света", NamedTextColor.GRAY),
+                Component.text("Уровень света: " + safeLevel, NamedTextColor.YELLOW)
         ));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
         meta.getPersistentDataContainer().set(levelKey, PersistentDataType.INTEGER, safeLevel);
