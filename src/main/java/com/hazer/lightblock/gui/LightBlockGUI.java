@@ -5,10 +5,13 @@ import com.hazer.lightblock.item.LightBlockItemManager;
 import com.hazer.lightblock.recipe.RecipeManager;
 import com.hazer.lightblock.recipe.RecipeManager.RecipeRequirement;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,6 +22,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.enchantments.Enchantment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,9 +52,10 @@ public class LightBlockGUI implements Listener {
     }
 
     public void open(Player player, int initialLevel) {
-        int level = Math.max(1, Math.min(15, initialLevel));
+        int level = sanitizeLevel(initialLevel, true);
         selectedLevels.put(player, level);
         player.openInventory(buildInventory(player, level));
+        player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 0.7f, 1.3f);
     }
 
     private Inventory buildInventory(Player player, int level) {
@@ -69,13 +74,17 @@ public class LightBlockGUI implements Listener {
         int maxCraftable = recipeManager.getCraftableAmount(player, level);
         inv.setItem(SLOT_QUANTITY_INFO, buildQuantityInfo(maxCraftable));
         inv.setItem(SLOT_CRAFT, buildCraftButton(level, maxCraftable));
-        inv.setItem(SLOT_PREVIOUS, navButton("Предыдущий уровень", level > 1));
-        inv.setItem(SLOT_NEXT, navButton("Следующий уровень", level < 15));
+        inv.setItem(SLOT_PREVIOUS, navButton("Предыдущий уровень", getPreviousLevel(level) != level));
+        inv.setItem(SLOT_NEXT, navButton("Следующий уровень", getNextLevel(level) != level));
+
+        if (level == 2) {
+            inv.setItem(SLOT_CRAFT, disabledLevelInfo());
+        }
         return inv;
     }
 
     private void fillBackground(Inventory inv) {
-        ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemStack pane = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = pane.getItemMeta();
         meta.displayName(Component.text(" "));
         pane.setItemMeta(meta);
@@ -83,6 +92,14 @@ public class LightBlockGUI implements Listener {
         for (int i = 0; i < inv.getSize(); i++) {
             inv.setItem(i, pane);
         }
+        for (int slot : RECIPE_SLOTS) {
+            ItemStack accent = new ItemStack(Material.CYAN_STAINED_GLASS_PANE);
+            ItemMeta accentMeta = accent.getItemMeta();
+            accentMeta.displayName(Component.text("Слот ингредиента", NamedTextColor.DARK_AQUA));
+            accent.setItemMeta(accentMeta);
+            inv.setItem(slot, accent);
+        }
+
     }
 
     private ItemStack buildRequirementItem(RecipeRequirement requirement, boolean hasEnough) {
@@ -103,8 +120,12 @@ public class LightBlockGUI implements Listener {
     private ItemStack buildQuantityInfo(int maxCraftable) {
         ItemStack info = new ItemStack(maxCraftable > 0 ? Material.LIME_DYE : Material.RED_DYE);
         ItemMeta meta = info.getItemMeta();
-        meta.displayName(Component.text("Доступно для крафта", NamedTextColor.AQUA));
-        meta.lore(List.of(Component.text("Можно создать: " + maxCraftable, NamedTextColor.WHITE)));
+        meta.displayName(Component.text("Доступно для крафта", NamedTextColor.AQUA, TextDecoration.BOLD));
+        meta.lore(List.of(
+                Component.text("Можно создать: " + maxCraftable, NamedTextColor.WHITE),
+                Component.text(maxCraftable > 0 ? "Нажмите кнопку ниже" : "Соберите больше ресурсов",
+                        maxCraftable > 0 ? NamedTextColor.GREEN : NamedTextColor.RED)
+        ));
         info.setItemMeta(meta);
         return info;
     }
@@ -112,16 +133,32 @@ public class LightBlockGUI implements Listener {
     private ItemStack buildCraftButton(int level, int maxCraftable) {
         ItemStack craft = new ItemStack(maxCraftable > 0 ? Material.EMERALD : Material.BARRIER);
         ItemMeta meta = craft.getItemMeta();
-        meta.displayName(Component.text("Создать светоблок " + itemManager.toRoman(level), NamedTextColor.GOLD));
+        meta.displayName(Component.text("Создать светоблок " + itemManager.toRoman(level), NamedTextColor.GOLD, TextDecoration.BOLD));
         meta.lore(List.of(Component.text("Количество: " + maxCraftable, NamedTextColor.WHITE)));
+        if (maxCraftable > 0) {
+            meta.addEnchant(Enchantment.LURE, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        }
         craft.setItemMeta(meta);
         return craft;
+    }
+
+    private ItemStack disabledLevelInfo() {
+        ItemStack blocked = new ItemStack(Material.BARRIER);
+        ItemMeta meta = blocked.getItemMeta();
+        meta.displayName(Component.text("2-й уровень отключён", NamedTextColor.RED, TextDecoration.BOLD));
+        meta.lore(List.of(Component.text("Этот уровень недоступен из-за найденного дюпа.", NamedTextColor.GRAY)));
+        blocked.setItemMeta(meta);
+        return blocked;
     }
 
     private ItemStack navButton(String label, boolean enabled) {
         ItemStack item = new ItemStack(enabled ? Material.ARROW : Material.BARRIER);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text(label, NamedTextColor.YELLOW));
+        if (!enabled) {
+            meta.lore(List.of(Component.text("Недоступно", NamedTextColor.RED)));
+        }
         item.setItemMeta(meta);
         return item;
     }
@@ -145,27 +182,39 @@ public class LightBlockGUI implements Listener {
         int slot = event.getRawSlot();
 
         if (slot == SLOT_PREVIOUS && level > 1) {
-            selectedLevels.put(player, level - 1);
-            player.openInventory(buildInventory(player, level - 1));
+            int nextLevel = getPreviousLevel(level);
+            selectedLevels.put(player, nextLevel);
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 0.8f);
+            player.openInventory(buildInventory(player, nextLevel));
             return;
         }
         if (slot == SLOT_NEXT && level < 15) {
-            selectedLevels.put(player, level + 1);
-            player.openInventory(buildInventory(player, level + 1));
+            int nextLevel = getNextLevel(level);
+            selectedLevels.put(player, nextLevel);
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.2f);
+            player.openInventory(buildInventory(player, nextLevel));
             return;
         }
         if (slot != SLOT_CRAFT) {
             return;
         }
 
+        if (level == 2) {
+            player.sendMessage(Component.text("2-й уровень отключён из-за проблем с безопасностью.", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            return;
+        }
+
         int craftable = recipeManager.getCraftableAmount(player, level);
         if (craftable <= 0) {
             player.sendMessage(Component.text("Недостаточно ресурсов для крафта.", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.8f);
             return;
         }
 
         if (!recipeManager.consumeForCraft(player, level, craftable)) {
             player.sendMessage(Component.text("Крафт не выполнен: инвентарь изменился. Попробуйте снова.", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.7f);
             return;
         }
 
@@ -175,6 +224,8 @@ public class LightBlockGUI implements Listener {
 
         player.sendMessage(Component.text("Создано " + craftable + "x Световой блок " + itemManager.toRoman(level) + "!",
                 NamedTextColor.GREEN));
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
+        player.spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 30, 0.4, 0.6, 0.4, 0.02);
         Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(buildInventory(player, level)));
     }
 
@@ -210,5 +261,27 @@ public class LightBlockGUI implements Listener {
             amount += item.getAmount();
         }
         return amount;
+    }
+
+    private int sanitizeLevel(int level, boolean preferLowerWhenTwo) {
+        int safeLevel = Math.max(1, Math.min(15, level));
+        if (safeLevel == 2) {
+            return preferLowerWhenTwo ? 1 : 3;
+        }
+        return safeLevel;
+    }
+
+    private int getPreviousLevel(int level) {
+        if (level <= 1) {
+            return 1;
+        }
+        return sanitizeLevel(level - 1, true);
+    }
+
+    private int getNextLevel(int level) {
+        if (level >= 15) {
+            return 15;
+        }
+        return sanitizeLevel(level + 1, false);
     }
 }

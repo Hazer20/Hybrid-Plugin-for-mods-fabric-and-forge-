@@ -48,6 +48,11 @@ public class LightBlockCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (level == 2) {
+            player.sendMessage(Component.text("2-й уровень временно отключён из-за проблем с безопасностью.", NamedTextColor.RED));
+            return true;
+        }
+
         gui.open(player, level);
         return true;
     }
@@ -57,6 +62,9 @@ public class LightBlockCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             List<String> levels = new ArrayList<>();
             for (int i = 1; i <= 15; i++) {
+                if (i == 2) {
+                    continue;
+                }
                 String level = String.valueOf(i);
                 if (level.startsWith(args[0])) {
                     levels.add(level);

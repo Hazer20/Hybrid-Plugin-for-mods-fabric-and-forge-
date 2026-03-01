@@ -38,6 +38,10 @@ public class RecipeManager {
         int safeLevel = Math.max(1, Math.min(15, level));
         List<RecipeRequirement> requirements = new ArrayList<>();
 
+        if (safeLevel == 2) {
+            return requirements;
+        }
+
         if (safeLevel == 1) {
             requirements.add(new RecipeRequirement(Material.GLOWSTONE, 1));
             requirements.add(new RecipeRequirement(Material.SEA_LANTERN, 4));
@@ -46,7 +50,8 @@ public class RecipeManager {
             return requirements;
         }
 
-        requirements.add(new RecipeRequirement(itemManager.createLightBlockItem(safeLevel - 1, 1), 2));
+        int previousLevel = safeLevel == 3 ? 1 : safeLevel - 1;
+        requirements.add(new RecipeRequirement(itemManager.createLightBlockItem(previousLevel, 1), 2));
         requirements.add(vanillaCurve.get(safeLevel - 2));
         requirements.add(new RecipeRequirement(Material.EXPERIENCE_BOTTLE, safeLevel));
         return requirements;
@@ -54,6 +59,9 @@ public class RecipeManager {
 
     public int getCraftableAmount(Player player, int level) {
         List<RecipeRequirement> requirements = getRequirements(level);
+        if (requirements.isEmpty()) {
+            return 0;
+        }
         int max = Integer.MAX_VALUE;
 
         for (RecipeRequirement requirement : requirements) {
@@ -71,6 +79,9 @@ public class RecipeManager {
         }
 
         List<RecipeRequirement> requirements = getRequirements(level);
+        if (requirements.isEmpty()) {
+            return false;
+        }
         for (RecipeRequirement requirement : requirements) {
             int needed = requirement.amount() * amount;
             if (countItem(player, requirement.prototype()) < needed) {
