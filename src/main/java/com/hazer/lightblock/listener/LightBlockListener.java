@@ -38,10 +38,7 @@ public class LightBlockListener implements Listener {
             block.setType(Material.LIGHT, false);
         }
 
-        int level = itemManager.getLightLevel(hand);
-        if (level < 1) {
-            level = 1;
-        }
+        int level = 1;
 
         if (block.getBlockData() instanceof Levelled levelled) {
             int max = levelled.getMaximumLevel();
@@ -59,11 +56,7 @@ public class LightBlockListener implements Listener {
         }
 
         Player player = event.getPlayer();
-        int emittedLevel = 15;
-
-        if (block.getBlockData() instanceof Levelled levelled) {
-            emittedLevel = Math.max(1, Math.min(15, 15 - levelled.getLevel()));
-        }
+        int emittedLevel = 1;
 
         event.setDropItems(false);
         block.setType(Material.AIR, false);

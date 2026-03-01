@@ -7,7 +7,7 @@ description: Добавляет крафт невидимых светоблок
 commands:
   lightblock:
     description: Открыть GUI крафта светоблоков.
-    usage: /lightblock [level]
+    usage: /lightblock
     aliases: [lb]
 permissions:
   lightblock.use:

@@ -9,7 +9,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,45 +32,16 @@ public class LightBlockCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        int level = 1;
         if (args.length > 0) {
-            try {
-                level = Integer.parseInt(args[0]);
-            } catch (NumberFormatException ignored) {
-                player.sendMessage(Component.text("Неверный уровень. Используйте числа от 1 до 15.", NamedTextColor.RED));
-                return true;
-            }
+            player.sendMessage(Component.text("Уровни удалены. Доступен только Световой блок I.", NamedTextColor.YELLOW));
         }
 
-        if (level < 1 || level > 15) {
-            player.sendMessage(Component.text("Уровень должен быть от 1 до 15.", NamedTextColor.RED));
-            return true;
-        }
-
-        if (level == 2) {
-            player.sendMessage(Component.text("2-й уровень временно отключён из-за проблем с безопасностью.", NamedTextColor.RED));
-            return true;
-        }
-
-        gui.open(player, level);
+        gui.open(player, 1);
         return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) {
-            List<String> levels = new ArrayList<>();
-            for (int i = 1; i <= 15; i++) {
-                if (i == 2) {
-                    continue;
-                }
-                String level = String.valueOf(i);
-                if (level.startsWith(args[0])) {
-                    levels.add(level);
-                }
-            }
-            return levels;
-        }
         return Collections.emptyList();
     }
 }
