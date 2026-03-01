@@ -47,3 +47,8 @@ python update_mc_pack.py --datapack old_datapack_path --resourcepack old_resourc
 ```
 
 Дополнительно можно использовать `--dry-run` для проверки без записи изменений.
+
+
+## Windows console encoding
+
+`run_update.bat` now forces UTF-8 code page (`chcp 65001`) and uses clear ASCII/English prompts to avoid unreadable mojibake text in console/logs.

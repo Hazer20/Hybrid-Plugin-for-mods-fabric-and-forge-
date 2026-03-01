@@ -1,5 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
+chcp 65001 >nul
 
 REM ==================================================================
 REM Minecraft Pack Updater Launcher (Windows)
@@ -18,14 +19,14 @@ set "LOG_DIR=%SCRIPT_DIR%logs"
 set "BAT_LOG=%LOG_DIR%\bat_progress.log"
 
 if not exist "%PY_SCRIPT%" (
-    echo [ERROR] Не найден файл update_mc_pack.py рядом с батником:
+    echo [ERROR] update_mc_pack.py not found near BAT file:
     echo         %PY_SCRIPT%
     exit /b 1
 )
 
 where python >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python не найден в PATH. Установите Python 3.10+ и добавьте в PATH.
+    echo [ERROR] Python not found in PATH. Install Python 3.10+ and add it to PATH.
     exit /b 1
 )
 
@@ -36,8 +37,8 @@ if not exist "%DEFAULT_OUTPUT%" mkdir "%DEFAULT_OUTPUT%"
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
 
 call :log "============================================================"
-call :log "Запуск run_update.bat"
-call :log "Базовые папки готовы:"
+call :log "run_update.bat started"
+call :log "Base folders are ready:"
 call :log "  DATAPACK: %DEFAULT_DP%"
 call :log "  RESOURCEPACK: %DEFAULT_RP%"
 call :log "  OUTPUT: %DEFAULT_OUTPUT%"
@@ -49,16 +50,16 @@ dir /b "%DEFAULT_RP%" >nul 2>&1
 set "RP_EMPTY=%ERRORLEVEL%"
 
 if "%DP_EMPTY%"=="1" if "%RP_EMPTY%"=="1" (
-    call :log "Первый запуск: созданы папки для входных паков."
-    call :log "Скопируйте ваш ДАТАПАК в: %DEFAULT_DP%"
-    call :log "Скопируйте ваш РЕСУРС-ПАК в: %DEFAULT_RP%"
-    call :log "После этого запустите run_update.bat еще раз."
+    call :log "First run detected: input folders created."
+    call :log "Copy your DATAPACK to: %DEFAULT_DP%"
+    call :log "Copy your RESOURCEPACK to: %DEFAULT_RP%"
+    call :log "Then run run_update.bat again."
     echo.
-    echo [INFO] Первый запуск завершен: созданы папки для входных паков.
-    echo [INFO] Положите файлы в:
+    echo [INFO] First run completed: input folders created.
+    echo [INFO] Put your files here:
     echo        %DEFAULT_DP%
     echo        %DEFAULT_RP%
-    echo [INFO] Затем запустите батник повторно.
+    echo [INFO] Then run BAT again.
     echo.
     pause
     exit /b 0
@@ -66,88 +67,88 @@ if "%DP_EMPTY%"=="1" if "%RP_EMPTY%"=="1" (
 
 echo.
 echo ===== Minecraft Datapack/Resourcepack Updater =====
-echo По умолчанию используются папки:
+echo Default folders:
 echo   Datapack:      %DEFAULT_DP%
 echo   Resourcepack:  %DEFAULT_RP%
 echo   Output:        %DEFAULT_OUTPUT%
 echo.
 
-set /p DATAPACK_PATH=Введите путь к датапаку (Enter = по умолчанию): 
+set /p DATAPACK_PATH=Enter datapack path (Enter = default): 
 if "%DATAPACK_PATH%"=="" set "DATAPACK_PATH=%DEFAULT_DP%"
 
-set /p RESOURCEPACK_PATH=Введите путь к ресурс-паку (Enter = по умолчанию): 
+set /p RESOURCEPACK_PATH=Enter resourcepack path (Enter = default): 
 if "%RESOURCEPACK_PATH%"=="" set "RESOURCEPACK_PATH=%DEFAULT_RP%"
 
-set /p OUTPUT_PATH=Введите выходную папку (Enter = по умолчанию): 
+set /p OUTPUT_PATH=Enter output folder (Enter = default): 
 if "%OUTPUT_PATH%"=="" set "OUTPUT_PATH=%DEFAULT_OUTPUT%"
 
-call :log "Выбраны пути:"
+call :log "Selected paths:"
 call :log "  DATAPACK: %DATAPACK_PATH%"
 call :log "  RESOURCEPACK: %RESOURCEPACK_PATH%"
 call :log "  OUTPUT: %OUTPUT_PATH%"
 
 if not exist "%DATAPACK_PATH%" (
-    call :log "[ERROR] Папка датапака не существует: %DATAPACK_PATH%"
-    echo [ERROR] Папка датапака не существует: "%DATAPACK_PATH%"
+    call :log "[ERROR] Datapack folder does not exist: %DATAPACK_PATH%"
+    echo [ERROR] Datapack folder does not exist: "%DATAPACK_PATH%"
     pause
     exit /b 1
 )
 
 if not exist "%RESOURCEPACK_PATH%" (
-    call :log "[ERROR] Папка ресурс-пака не существует: %RESOURCEPACK_PATH%"
-    echo [ERROR] Папка ресурс-пака не существует: "%RESOURCEPACK_PATH%"
+    call :log "[ERROR] Resourcepack folder does not exist: %RESOURCEPACK_PATH%"
+    echo [ERROR] Resourcepack folder does not exist: "%RESOURCEPACK_PATH%"
     pause
     exit /b 1
 )
 
 if not exist "%DATAPACK_PATH%\pack.mcmeta" (
-    call :log "[WARNING] В датапаке нет pack.mcmeta: %DATAPACK_PATH%"
-    echo [WARNING] В папке датапака нет pack.mcmeta: "%DATAPACK_PATH%"
+    call :log "[WARNING] pack.mcmeta is missing in datapack: %DATAPACK_PATH%"
+    echo [WARNING] pack.mcmeta is missing in datapack: "%DATAPACK_PATH%"
 )
 
 if not exist "%DATAPACK_PATH%\data" (
-    call :log "[WARNING] В датапаке нет data: %DATAPACK_PATH%"
-    echo [WARNING] В папке датапака нет папки data: "%DATAPACK_PATH%"
+    call :log "[WARNING] data folder is missing in datapack: %DATAPACK_PATH%"
+    echo [WARNING] data folder is missing in datapack: "%DATAPACK_PATH%"
 )
 
 if not exist "%RESOURCEPACK_PATH%\pack.mcmeta" (
-    call :log "[WARNING] В ресурс-паке нет pack.mcmeta: %RESOURCEPACK_PATH%"
-    echo [WARNING] В папке ресурс-пака нет pack.mcmeta: "%RESOURCEPACK_PATH%"
+    call :log "[WARNING] pack.mcmeta is missing in resourcepack: %RESOURCEPACK_PATH%"
+    echo [WARNING] pack.mcmeta is missing in resourcepack: "%RESOURCEPACK_PATH%"
 )
 
 if not exist "%RESOURCEPACK_PATH%\assets" (
-    call :log "[WARNING] В ресурс-паке нет assets: %RESOURCEPACK_PATH%"
-    echo [WARNING] В папке ресурс-пака нет папки assets: "%RESOURCEPACK_PATH%"
+    call :log "[WARNING] assets folder is missing in resourcepack: %RESOURCEPACK_PATH%"
+    echo [WARNING] assets folder is missing in resourcepack: "%RESOURCEPACK_PATH%"
 )
 
 echo.
-echo [STEP 1/4] Проверка путей завершена.
-call :log "[STEP 1/4] Проверка путей завершена"
+echo [STEP 1/4] Path validation completed.
+call :log "[STEP 1/4] Path validation completed"
 
 if not exist "%OUTPUT_PATH%" mkdir "%OUTPUT_PATH%"
-echo [STEP 2/4] Выходная папка готова: %OUTPUT_PATH%
-call :log "[STEP 2/4] Выходная папка готова: %OUTPUT_PATH%"
+echo [STEP 2/4] Output folder is ready: %OUTPUT_PATH%
+call :log "[STEP 2/4] Output folder is ready: %OUTPUT_PATH%"
 
-echo [STEP 3/4] Запуск Python-конвертера...
-call :log "[STEP 3/4] Запуск Python-конвертера"
-call :log "Команда: python \"%PY_SCRIPT%\" --datapack \"%DATAPACK_PATH%\" --resourcepack \"%RESOURCEPACK_PATH%\" --output \"%OUTPUT_PATH%\" --backup --log --ai-assist --ai-min-score 90"
+echo [STEP 3/4] Running Python converter...
+call :log "[STEP 3/4] Running Python converter"
+call :log "Command: python \"%PY_SCRIPT%\" --datapack \"%DATAPACK_PATH%\" --resourcepack \"%RESOURCEPACK_PATH%\" --output \"%OUTPUT_PATH%\" --backup --log --ai-assist --ai-min-score 90"
 
 python "%PY_SCRIPT%" --datapack "%DATAPACK_PATH%" --resourcepack "%RESOURCEPACK_PATH%" --output "%OUTPUT_PATH%" --backup --log --ai-assist --ai-min-score 90
 set "EXIT_CODE=%ERRORLEVEL%"
 
 if "%EXIT_CODE%"=="0" (
-    echo [STEP 4/4] Готово: конвертация успешно завершена.
-    echo [OK] Результат: "%OUTPUT_PATH%"
-    echo [OK] Логи Python: "%OUTPUT_PATH%\logs\changes.log" и "%OUTPUT_PATH%\logs\errors.log"
-    echo [OK] AI-отчет: "%OUTPUT_PATH%\logs\ai_assurance_report.txt"
-    echo [OK] Лог батника: "%BAT_LOG%"
-    call :log "[STEP 4/4] Успешно. Результат: %OUTPUT_PATH%"
+    echo [STEP 4/4] Done: conversion completed successfully.
+    echo [OK] Result: "%OUTPUT_PATH%"
+    echo [OK] Python logs: "%OUTPUT_PATH%\logs\changes.log" and "%OUTPUT_PATH%\logs\errors.log"
+    echo [OK] AI report: "%OUTPUT_PATH%\logs\ai_assurance_report.txt"
+    echo [OK] BAT log: "%BAT_LOG%"
+    call :log "[STEP 4/4] Success. Result: %OUTPUT_PATH%"
 ) else (
-    echo [STEP 4/4] Ошибка выполнения. Код: %EXIT_CODE%
-    echo [ERROR] Проверьте логи:
+    echo [STEP 4/4] Execution failed. Exit code: %EXIT_CODE%
+    echo [ERROR] Check logs:
     echo         "%OUTPUT_PATH%\logs\errors.log"
     echo         "%BAT_LOG%"
-    call :log "[STEP 4/4] Ошибка. Код: %EXIT_CODE%"
+    call :log "[STEP 4/4] Failed. Exit code: %EXIT_CODE%"
 )
 
 echo.
