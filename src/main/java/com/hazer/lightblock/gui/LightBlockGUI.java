@@ -22,11 +22,13 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class LightBlockGUI implements Listener {
 
@@ -35,11 +37,13 @@ public class LightBlockGUI implements Listener {
     private static final int SLOT_RESULT = 13;
     private static final int SLOT_QUANTITY_INFO = 31;
     private static final int[] RECIPE_SLOTS = {20, 21, 22, 23, 24, 29, 30, 32, 33};
+    private static final int[] ANIMATION_SLOTS = {0, 8, 45, 53, 4, 49};
 
     private final LightBlockPlugin plugin;
     private final LightBlockItemManager itemManager;
     private final RecipeManager recipeManager;
     private final Map<Player, Boolean> viewers = new HashMap<>();
+    private final Map<UUID, BukkitTask> animations = new HashMap<>();
 
     public LightBlockGUI(LightBlockPlugin plugin, LightBlockItemManager itemManager, RecipeManager recipeManager) {
         this.plugin = plugin;
@@ -51,6 +55,8 @@ public class LightBlockGUI implements Listener {
         viewers.put(player, true);
         player.openInventory(buildInventory(player));
         player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 0.7f, 1.3f);
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 0.5f, 1.5f);
+        startAnimation(player);
     }
 
     private Inventory buildInventory(Player player) {
@@ -124,6 +130,45 @@ public class LightBlockGUI implements Listener {
         return craft;
     }
 
+    private void startAnimation(Player player) {
+        stopAnimation(player);
+        final int[] frame = {0};
+
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline() || !isLightBlockView(player.getOpenInventory().title())) {
+                stopAnimation(player);
+                return;
+            }
+
+            Inventory top = player.getOpenInventory().getTopInventory();
+            Material waveA = frame[0] % 2 == 0 ? Material.LIGHT_BLUE_STAINED_GLASS_PANE : Material.CYAN_STAINED_GLASS_PANE;
+            Material waveB = frame[0] % 2 == 0 ? Material.BLUE_STAINED_GLASS_PANE : Material.LIGHT_BLUE_STAINED_GLASS_PANE;
+
+            for (int i = 0; i < ANIMATION_SLOTS.length; i++) {
+                Material mat = i % 2 == 0 ? waveA : waveB;
+                ItemStack pane = new ItemStack(mat);
+                ItemMeta meta = pane.getItemMeta();
+                meta.displayName(Component.text("✨ Световая энергия ✨", NamedTextColor.AQUA));
+                pane.setItemMeta(meta);
+                top.setItem(ANIMATION_SLOTS[i], pane);
+            }
+
+            frame[0]++;
+            if (frame[0] % 6 == 0) {
+                player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.20f, 1.9f);
+            }
+        }, 0L, 10L);
+
+        animations.put(player.getUniqueId(), task);
+    }
+
+    private void stopAnimation(Player player) {
+        BukkitTask task = animations.remove(player.getUniqueId());
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
     @EventHandler
     public void onGuiClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player) || !viewers.containsKey(player)) {
@@ -140,6 +185,7 @@ public class LightBlockGUI implements Listener {
         }
 
         if (event.getRawSlot() != SLOT_CRAFT) {
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
             return;
         }
 
@@ -147,11 +193,13 @@ public class LightBlockGUI implements Listener {
         if (craftable <= 0) {
             player.sendMessage(Component.text("Недостаточно ресурсов для крафта.", NamedTextColor.RED));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.8f);
+            player.spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 12, 0.2, 0.3, 0.2, 0.01);
             return;
         }
 
         if (!recipeManager.consumeForCraft(player, 1, craftable)) {
             player.sendMessage(Component.text("Крафт не выполнен: инвентарь изменился. Попробуйте снова.", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.7f);
             return;
         }
 
@@ -161,7 +209,10 @@ public class LightBlockGUI implements Listener {
 
         player.sendMessage(Component.text("Создано " + craftable + "x Световой блок I!", NamedTextColor.GREEN));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
+        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.8f);
         player.spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.01);
+        player.spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1, 0), 16, 0.35, 0.4, 0.35, 0.01);
+        player.spawnParticle(Particle.GLOW, player.getLocation().add(0, 1.1, 0), 14, 0.25, 0.25, 0.25, 0.02);
         Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(buildInventory(player)));
     }
 
@@ -176,6 +227,7 @@ public class LightBlockGUI implements Listener {
     public void onClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player player) {
             viewers.remove(player);
+            stopAnimation(player);
         }
     }
 
