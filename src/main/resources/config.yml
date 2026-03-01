@@ -1,0 +1,22 @@
+# ResourcePackManager configuration
+# URL prefix for packs. The chosen .zip file name is appended automatically.
+# Example: https://cdn.example.com/resourcepacks/
+resource-pack-base-url: "http://localhost:8080/resourcepacks/"
+
+# If true, the plugin requires players to accept the pack (Paper's force mode).
+# If false, players can decline without being kicked.
+force-resource-pack: false
+
+# Text shown to players when they join and when no pack is available.
+messages:
+  ask: "Хотите скачать текстур пак? [Да / Нет]"
+  yes: "Да"
+  no: "Нет"
+  unavailable: "Ресурс-пак сейчас недоступен."
+  accepted: "Вы приняли ресурс-пак. Отправляю загрузку..."
+  declined: "Вы отказались от загрузки ресурс-пака."
+  loaded: "Активный ресурс-пак: %pack%"
+
+# Logging configuration
+logging:
+  debug: true
