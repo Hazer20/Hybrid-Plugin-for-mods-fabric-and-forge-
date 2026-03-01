@@ -52,3 +52,14 @@ python update_mc_pack.py --datapack old_datapack_path --resourcepack old_resourc
 ## Windows console encoding
 
 `run_update.bat` now forces UTF-8 code page (`chcp 65001`) and uses clear ASCII/English prompts to avoid unreadable mojibake text in console/logs.
+
+
+## ZIP archives support
+
+You can pass folders **or `.zip` archives** as `--datapack` / `--resourcepack`.
+The tool will:
+1. extract archive to a temporary work folder,
+2. run conversion,
+3. create converted archive in `output/zipped_results/<pack_kind>/..._updated_1_21_8.zip`.
+
+`run_update.bat` also supports entering `.zip` file paths directly.

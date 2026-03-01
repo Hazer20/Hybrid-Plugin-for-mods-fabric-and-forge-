@@ -2,16 +2,6 @@
 
 This module intentionally centralizes lower-level reusable operations used by
 both datapack and resourcepack update workflows.
-
-Key responsibilities:
-- directory scaffolding;
-- pack metadata generation (`pack.mcmeta`);
-- file discovery utilities;
-- safe JSON read/write helpers;
-- backup creation with timestamped naming;
-- dry-run compatible copy and write wrappers;
-- simple structural validation checks;
-- text rewrite helpers with replacement maps.
 """
 
 from __future__ import annotations
@@ -21,7 +11,8 @@ from datetime import datetime
 import json
 import shutil
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from .logger import UpdateLogger
 
@@ -32,8 +23,6 @@ RESOURCEPACK_FORMAT_1_21_8 = 46
 
 @dataclass
 class ProjectPaths:
-    """Represents all canonical project directories used by updater."""
-
     root: Path
     datapacks: Path
     old_datapack: Path
@@ -47,31 +36,12 @@ class ProjectPaths:
 
 @dataclass
 class ValidationIssue:
-    """Represents issue found during structural validation."""
-
     severity: str
     message: str
     path: Optional[Path] = None
 
 
 def ensure_project_structure(root: Path, logger: UpdateLogger, dry_run: bool = False) -> ProjectPaths:
-    """Create the baseline project structure if it does not exist.
-
-    The requested structure is:
-
-    root/
-      datapacks/
-        old_datapack/
-        new_datapack/
-      resourcepacks/
-        old_resourcepack/
-        new_resourcepack/
-      logs/
-      config/
-
-    Additionally creates `pack.mcmeta` placeholders for new pack folders.
-    """
-
     datapacks = root / "datapacks"
     old_datapack = datapacks / "old_datapack"
     new_datapack = datapacks / "new_datapack"
@@ -109,7 +79,6 @@ def ensure_project_structure(root: Path, logger: UpdateLogger, dry_run: bool = F
         logger=logger,
         dry_run=dry_run,
     )
-
     write_pack_mcmeta(
         pack_dir=new_resourcepack,
         pack_format=RESOURCEPACK_FORMAT_1_21_8,
@@ -138,14 +107,7 @@ def write_pack_mcmeta(
     logger: UpdateLogger,
     dry_run: bool = False,
 ) -> None:
-    """Create or rewrite a `pack.mcmeta` file in `pack_dir`."""
-
-    mcmeta = {
-        "pack": {
-            "pack_format": pack_format,
-            "description": description,
-        }
-    }
+    mcmeta = {"pack": {"pack_format": pack_format, "description": description}}
     path = pack_dir / "pack.mcmeta"
     if dry_run:
         logger.info(f"[dry-run] Would write pack metadata file: {path}")
@@ -156,30 +118,22 @@ def write_pack_mcmeta(
 
 
 def timestamp_for_backup() -> str:
-    """Return local timestamp string for backup names."""
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 def create_backup(source: Path, backup_root: Path, logger: UpdateLogger, dry_run: bool = False) -> Optional[Path]:
-    """Create timestamped backup for a file or directory.
-
-    Args:
-        source: Source path to backup.
-        backup_root: Directory where backup will be created.
-        logger: Shared logger.
-        dry_run: If true, do not write data.
-
-    Returns:
-        Created backup path or None when skipped.
-    """
-
     if not source.exists():
         logger.warning(f"Backup skipped because source path does not exist: {source}")
         return None
 
     backup_root = backup_root / "backups"
-    target_name = f"{source.name}_{timestamp_for_backup()}"
-    target = backup_root / target_name
+    target = backup_root / f"{source.stem}_{timestamp_for_backup()}{source.suffix if source.is_file() else ''}"
+
+    if not dry_run:
+        counter = 1
+        while target.exists():
+            target = backup_root / f"{source.stem}_{timestamp_for_backup()}_{counter}{source.suffix if source.is_file() else ''}"
+            counter += 1
 
     if dry_run:
         logger.info(f"[dry-run] Would create backup: {source} -> {target}")
@@ -190,17 +144,37 @@ def create_backup(source: Path, backup_root: Path, logger: UpdateLogger, dry_run
         shutil.copytree(source, target)
     else:
         shutil.copy2(source, target)
-
     logger.info(f"Created backup: {source} -> {target}")
     return target
 
 
+def extract_zip_to_dir(zip_path: Path, destination: Path, logger: UpdateLogger, dry_run: bool = False) -> Path:
+    """Extract zip archive to destination folder."""
+    if dry_run:
+        logger.info(f"[dry-run] Would extract zip: {zip_path} -> {destination}")
+        return destination
+    destination.mkdir(parents=True, exist_ok=True)
+    with ZipFile(zip_path, "r") as zf:
+        zf.extractall(destination)
+    logger.info(f"Extracted zip: {zip_path} -> {destination}")
+    return destination
+
+
+def zip_dir(source_dir: Path, zip_path: Path, logger: UpdateLogger, dry_run: bool = False) -> Path:
+    """Pack a directory into zip archive preserving relative paths."""
+    if dry_run:
+        logger.info(f"[dry-run] Would create zip: {source_dir} -> {zip_path}")
+        return zip_path
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    with ZipFile(zip_path, "w", compression=ZIP_DEFLATED) as zf:
+        for file_path in source_dir.rglob("*"):
+            if file_path.is_file():
+                zf.write(file_path, arcname=file_path.relative_to(source_dir))
+    logger.info(f"Created zip: {source_dir} -> {zip_path}")
+    return zip_path
+
+
 def iter_files_by_extension(root: Path, extensions: Sequence[str]) -> Iterator[Path]:
-    """Yield files recursively matching any extension from `extensions`.
-
-    Extensions should include leading dot, e.g. `.json`.
-    """
-
     normalized = {ext.lower() for ext in extensions}
     for path in root.rglob("*"):
         if path.is_file() and path.suffix.lower() in normalized:
@@ -208,7 +182,6 @@ def iter_files_by_extension(root: Path, extensions: Sequence[str]) -> Iterator[P
 
 
 def read_json_file(path: Path, logger: UpdateLogger) -> Optional[dict]:
-    """Safely read JSON file, returning None on parse errors."""
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001
@@ -217,7 +190,6 @@ def read_json_file(path: Path, logger: UpdateLogger) -> Optional[dict]:
 
 
 def write_json_file(path: Path, payload: Mapping, logger: UpdateLogger, dry_run: bool = False) -> None:
-    """Write JSON file with UTF-8 encoding and stable formatting."""
     if dry_run:
         logger.info(f"[dry-run] Would write JSON file: {path}")
         return
@@ -227,7 +199,6 @@ def write_json_file(path: Path, payload: Mapping, logger: UpdateLogger, dry_run:
 
 
 def copy_tree(src: Path, dst: Path, logger: UpdateLogger, dry_run: bool = False) -> None:
-    """Copy directory tree with replacement of destination if needed."""
     if dry_run:
         logger.info(f"[dry-run] Would copy tree {src} -> {dst}")
         return
@@ -238,7 +209,6 @@ def copy_tree(src: Path, dst: Path, logger: UpdateLogger, dry_run: bool = False)
 
 
 def copy_file(src: Path, dst: Path, logger: UpdateLogger, dry_run: bool = False) -> None:
-    """Copy single file preserving metadata."""
     if dry_run:
         logger.info(f"[dry-run] Would copy file {src} -> {dst}")
         return
@@ -248,7 +218,6 @@ def copy_file(src: Path, dst: Path, logger: UpdateLogger, dry_run: bool = False)
 
 
 def write_text_file(path: Path, text: str, logger: UpdateLogger, dry_run: bool = False) -> None:
-    """Write text file in UTF-8."""
     if dry_run:
         logger.info(f"[dry-run] Would write text file: {path}")
         return
@@ -258,7 +227,6 @@ def write_text_file(path: Path, text: str, logger: UpdateLogger, dry_run: bool =
 
 
 def apply_text_replacements(text: str, replacements: Mapping[str, str]) -> Tuple[str, int]:
-    """Apply literal replacements to text and return replacement count."""
     count = 0
     out = text
     for old, new in replacements.items():
@@ -271,79 +239,46 @@ def apply_text_replacements(text: str, replacements: Mapping[str, str]) -> Tuple
 
 
 def validate_datapack_structure(root: Path) -> List[ValidationIssue]:
-    """Perform basic datapack structure validation."""
     issues: List[ValidationIssue] = []
-
     if not root.exists():
         issues.append(ValidationIssue("error", "Datapack root does not exist", root))
         return issues
-
     if not (root / "pack.mcmeta").exists():
         issues.append(ValidationIssue("warning", "Missing pack.mcmeta", root / "pack.mcmeta"))
-
     data_dir = root / "data"
     if not data_dir.exists():
         issues.append(ValidationIssue("error", "Missing data directory", data_dir))
         return issues
-
     namespaces = [p for p in data_dir.iterdir() if p.is_dir()]
     if not namespaces:
         issues.append(ValidationIssue("warning", "No namespaces found in data/", data_dir))
-
-    required_common = [
-        "advancements",
-        "loot_tables",
-        "recipes",
-        "tags",
-        "functions",
-    ]
-
+    required_common = ["advancements", "loot_tables", "recipes", "tags", "functions"]
     for namespace in namespaces:
         for name in required_common:
             candidate = namespace / name
             if not candidate.exists():
-                issues.append(
-                    ValidationIssue(
-                        "info",
-                        f"Namespace '{namespace.name}' missing optional folder '{name}'",
-                        candidate,
-                    )
-                )
-
+                issues.append(ValidationIssue("info", f"Namespace '{namespace.name}' missing optional folder '{name}'", candidate))
     return issues
 
 
 def validate_resourcepack_structure(root: Path) -> List[ValidationIssue]:
-    """Perform basic resourcepack structure validation."""
     issues: List[ValidationIssue] = []
-
     if not root.exists():
         issues.append(ValidationIssue("error", "Resource pack root does not exist", root))
         return issues
-
     if not (root / "pack.mcmeta").exists():
         issues.append(ValidationIssue("warning", "Missing pack.mcmeta", root / "pack.mcmeta"))
-
     assets_dir = root / "assets"
     if not assets_dir.exists():
         issues.append(ValidationIssue("error", "Missing assets directory", assets_dir))
         return issues
-
     minecraft_assets = assets_dir / "minecraft"
     if not minecraft_assets.exists():
-        issues.append(
-            ValidationIssue(
-                "warning",
-                "Missing assets/minecraft namespace (pack may be modded namespace only)",
-                minecraft_assets,
-            )
-        )
-
+        issues.append(ValidationIssue("warning", "Missing assets/minecraft namespace (pack may be modded namespace only)", minecraft_assets))
     return issues
 
 
 def relative_to(path: Path, root: Path) -> str:
-    """Best-effort relative path string for logging."""
     try:
         return str(path.relative_to(root))
     except ValueError:
@@ -351,7 +286,6 @@ def relative_to(path: Path, root: Path) -> str:
 
 
 def split_multi_values(items: Sequence[str]) -> List[str]:
-    """Split multi-value CLI arguments by comma and strip spaces."""
     output: List[str] = []
     for item in items:
         for piece in item.split(","):
@@ -370,6 +304,8 @@ __all__ = [
     "write_pack_mcmeta",
     "timestamp_for_backup",
     "create_backup",
+    "extract_zip_to_dir",
+    "zip_dir",
     "iter_files_by_extension",
     "read_json_file",
     "write_json_file",

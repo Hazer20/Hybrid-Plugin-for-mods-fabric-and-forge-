@@ -73,10 +73,10 @@ echo   Resourcepack:  %DEFAULT_RP%
 echo   Output:        %DEFAULT_OUTPUT%
 echo.
 
-set /p DATAPACK_PATH=Enter datapack path (Enter = default): 
+set /p DATAPACK_PATH=Enter datapack path or .zip file (Enter = default): 
 if "%DATAPACK_PATH%"=="" set "DATAPACK_PATH=%DEFAULT_DP%"
 
-set /p RESOURCEPACK_PATH=Enter resourcepack path (Enter = default): 
+set /p RESOURCEPACK_PATH=Enter resourcepack path or .zip file (Enter = default): 
 if "%RESOURCEPACK_PATH%"=="" set "RESOURCEPACK_PATH=%DEFAULT_RP%"
 
 set /p OUTPUT_PATH=Enter output folder (Enter = default): 
@@ -101,24 +101,35 @@ if not exist "%RESOURCEPACK_PATH%" (
     exit /b 1
 )
 
-if not exist "%DATAPACK_PATH%\pack.mcmeta" (
-    call :log "[WARNING] pack.mcmeta is missing in datapack: %DATAPACK_PATH%"
-    echo [WARNING] pack.mcmeta is missing in datapack: "%DATAPACK_PATH%"
+set "DP_IS_ZIP=0"
+set "RP_IS_ZIP=0"
+if /I "%DATAPACK_PATH:~-4%"==".zip" set "DP_IS_ZIP=1"
+if /I "%RESOURCEPACK_PATH:~-4%"==".zip" set "RP_IS_ZIP=1"
+
+if "%DP_IS_ZIP%"=="1" (
+    call :log "Datapack is provided as ZIP: %DATAPACK_PATH%"
+) else (
+    if not exist "%DATAPACK_PATH%\pack.mcmeta" (
+        call :log "[WARNING] pack.mcmeta is missing in datapack: %DATAPACK_PATH%"
+        echo [WARNING] pack.mcmeta is missing in datapack: "%DATAPACK_PATH%"
+    )
+    if not exist "%DATAPACK_PATH%\data" (
+        call :log "[WARNING] data folder is missing in datapack: %DATAPACK_PATH%"
+        echo [WARNING] data folder is missing in datapack: "%DATAPACK_PATH%"
+    )
 )
 
-if not exist "%DATAPACK_PATH%\data" (
-    call :log "[WARNING] data folder is missing in datapack: %DATAPACK_PATH%"
-    echo [WARNING] data folder is missing in datapack: "%DATAPACK_PATH%"
-)
-
-if not exist "%RESOURCEPACK_PATH%\pack.mcmeta" (
-    call :log "[WARNING] pack.mcmeta is missing in resourcepack: %RESOURCEPACK_PATH%"
-    echo [WARNING] pack.mcmeta is missing in resourcepack: "%RESOURCEPACK_PATH%"
-)
-
-if not exist "%RESOURCEPACK_PATH%\assets" (
-    call :log "[WARNING] assets folder is missing in resourcepack: %RESOURCEPACK_PATH%"
-    echo [WARNING] assets folder is missing in resourcepack: "%RESOURCEPACK_PATH%"
+if "%RP_IS_ZIP%"=="1" (
+    call :log "Resourcepack is provided as ZIP: %RESOURCEPACK_PATH%"
+) else (
+    if not exist "%RESOURCEPACK_PATH%\pack.mcmeta" (
+        call :log "[WARNING] pack.mcmeta is missing in resourcepack: %RESOURCEPACK_PATH%"
+        echo [WARNING] pack.mcmeta is missing in resourcepack: "%RESOURCEPACK_PATH%"
+    )
+    if not exist "%RESOURCEPACK_PATH%\assets" (
+        call :log "[WARNING] assets folder is missing in resourcepack: %RESOURCEPACK_PATH%"
+        echo [WARNING] assets folder is missing in resourcepack: "%RESOURCEPACK_PATH%"
+    )
 )
 
 echo.
