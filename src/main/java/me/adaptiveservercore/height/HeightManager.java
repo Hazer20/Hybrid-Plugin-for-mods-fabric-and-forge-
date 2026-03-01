@@ -32,6 +32,9 @@ public class HeightManager implements HeightService {
     private final boolean animationEnabled;
     private final int animationDurationTicks;
 
+    private final Attribute entityInteractionRangeAttribute;
+    private final Attribute blockInteractionRangeAttribute;
+
     public HeightManager(AdaptiveServerCore plugin, PlayerDataStore playerDataStore) {
         this.plugin = plugin;
         this.playerDataStore = playerDataStore;
@@ -40,6 +43,9 @@ public class HeightManager implements HeightService {
         this.maxHeight = plugin.getConfig().getDouble("ограничения-роста.максимум", 5.0D);
         this.animationEnabled = plugin.getConfig().getBoolean("анимация-роста.включена", true);
         this.animationDurationTicks = Math.max(1, plugin.getConfig().getInt("анимация-роста.длительность-тиков", 20));
+
+        this.entityInteractionRangeAttribute = resolveAttribute("ENTITY_INTERACTION_RANGE", "PLAYER_ENTITY_INTERACTION_RANGE");
+        this.blockInteractionRangeAttribute = resolveAttribute("BLOCK_INTERACTION_RANGE", "PLAYER_BLOCK_INTERACTION_RANGE");
 
         this.heights.putAll(playerDataStore.readHeights());
 
@@ -109,7 +115,7 @@ public class HeightManager implements HeightService {
     }
 
     public double getAttackReach(Player player) {
-        AttributeInstance attribute = player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE);
+        AttributeInstance attribute = getAttributeInstance(player, entityInteractionRangeAttribute);
         return attribute != null ? attribute.getBaseValue() : 3.0D;
     }
 
@@ -178,19 +184,35 @@ public class HeightManager implements HeightService {
         }
 
         // Изменяем дальность атаки в зависимости от масштаба игрока.
-        AttributeInstance attackRange = player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE);
+        AttributeInstance attackRange = getAttributeInstance(player, entityInteractionRangeAttribute);
         if (attackRange != null) {
             attackRange.setBaseValue(Math.max(1.5D, 3.0D * scale));
         }
 
         // Поддерживаем дальность взаимодействия с блоками, чтобы ощущения были согласованы.
-        AttributeInstance blockRange = player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE);
+        AttributeInstance blockRange = getAttributeInstance(player, blockInteractionRangeAttribute);
         if (blockRange != null) {
             blockRange.setBaseValue(Math.max(2.0D, 4.5D * scale));
         }
 
         // Авто-ползание для очень маленького роста.
         player.setSwimming(height < 1.0D);
+    }
+
+    private Attribute resolveAttribute(String primary, String fallback) {
+        try {
+            return Attribute.valueOf(primary);
+        } catch (IllegalArgumentException ignored) {
+            try {
+                return Attribute.valueOf(fallback);
+            } catch (IllegalArgumentException ignoredAgain) {
+                return null;
+            }
+        }
+    }
+
+    private AttributeInstance getAttributeInstance(Player player, Attribute attribute) {
+        return attribute == null ? null : player.getAttribute(attribute);
     }
 
     private double clamp(double value) {
