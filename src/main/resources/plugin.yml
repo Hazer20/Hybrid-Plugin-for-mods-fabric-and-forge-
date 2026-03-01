@@ -1,0 +1,28 @@
+name: HybridSecurityPrefix
+version: 1.0.0
+main: ru.hybridplugin.securityprefix.HybridSecurityPrefixPlugin
+api-version: '1.21'
+authors: ["Hybrid"]
+description: Custom whitelist + auth passwords + prefix system with menu for Paper 1.21.8
+softdepend: [Vault]
+
+commands:
+  cwhitelist:
+    description: Управление кастомным whitelist
+    usage: /cwhitelist <add|remove|list|reload>
+    permission: hybrid.whitelist.admin
+    aliases: [cwl]
+  register:
+    description: Регистрация на сервере
+    usage: /register <password> <password>
+  login:
+    description: Вход на сервер
+    usage: /login <password>
+  prefix:
+    description: Управление префиксами
+    usage: /prefix <menu|set|premium|clear>
+
+permissions:
+  hybrid.whitelist.admin:
+    description: Управление кастомным whitelist
+    default: op
