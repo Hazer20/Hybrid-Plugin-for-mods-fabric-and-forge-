@@ -1,14 +1,14 @@
-"""Minecraft pack updater package.
+"""Minecraft pack updater package."""
 
-High-level package exports for building custom automation around the converter.
-"""
-
+from .ai_assistant import AIMigrationAssistant, AIAssuranceResult
 from .cli import run_cli
 from .datapack_update import DatapackUpdater, update_multiple_datapacks
-from .resourcepack_update import ResourcepackUpdater, update_multiple_resourcepacks
 from .logger import UpdateLogger, create_logger
+from .resourcepack_update import ResourcepackUpdater, update_multiple_resourcepacks
 
 __all__ = [
+    "AIMigrationAssistant",
+    "AIAssuranceResult",
     "run_cli",
     "DatapackUpdater",
     "update_multiple_datapacks",

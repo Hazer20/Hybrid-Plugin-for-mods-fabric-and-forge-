@@ -16,7 +16,21 @@
 5. Батник:
    - проверит пути и базовую структуру;
    - покажет понятные шаги выполнения (`STEP 1/4 ... STEP 4/4`);
-   - запустит полную конвертацию с `--backup --log`.
+   - запустит конвертацию с `--backup --log --ai-assist --ai-min-score 90`.
+
+## ИИ-проверка качества
+
+После конвертации можно включить AI-помощник (в батнике включен по умолчанию):
+
+```bash
+python update_mc_pack.py --datapack old_datapack_path --resourcepack old_resourcepack_path --output output_path --backup --log --ai-assist --ai-min-score 90
+```
+
+AI-помощник:
+- делает дополнительный проход по файлам,
+- пытается автоматически исправить остаточные устаревшие токены,
+- считает score качества,
+- пишет отчет `logs/ai_assurance_report.txt`.
 
 ## Логи и прогресс
 
@@ -24,6 +38,7 @@
 - Логи Python-конвертера пишутся в:
   - `mc_output/logs/changes.log`
   - `mc_output/logs/errors.log`
+  - `mc_output/logs/ai_assurance_report.txt` (если включен `--ai-assist`)
 
 ## Ручной запуск
 

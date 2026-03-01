@@ -130,15 +130,16 @@ call :log "[STEP 2/4] Выходная папка готова: %OUTPUT_PATH%"
 
 echo [STEP 3/4] Запуск Python-конвертера...
 call :log "[STEP 3/4] Запуск Python-конвертера"
-call :log "Команда: python \"%PY_SCRIPT%\" --datapack \"%DATAPACK_PATH%\" --resourcepack \"%RESOURCEPACK_PATH%\" --output \"%OUTPUT_PATH%\" --backup --log"
+call :log "Команда: python \"%PY_SCRIPT%\" --datapack \"%DATAPACK_PATH%\" --resourcepack \"%RESOURCEPACK_PATH%\" --output \"%OUTPUT_PATH%\" --backup --log --ai-assist --ai-min-score 90"
 
-python "%PY_SCRIPT%" --datapack "%DATAPACK_PATH%" --resourcepack "%RESOURCEPACK_PATH%" --output "%OUTPUT_PATH%" --backup --log
+python "%PY_SCRIPT%" --datapack "%DATAPACK_PATH%" --resourcepack "%RESOURCEPACK_PATH%" --output "%OUTPUT_PATH%" --backup --log --ai-assist --ai-min-score 90
 set "EXIT_CODE=%ERRORLEVEL%"
 
 if "%EXIT_CODE%"=="0" (
     echo [STEP 4/4] Готово: конвертация успешно завершена.
     echo [OK] Результат: "%OUTPUT_PATH%"
     echo [OK] Логи Python: "%OUTPUT_PATH%\logs\changes.log" и "%OUTPUT_PATH%\logs\errors.log"
+    echo [OK] AI-отчет: "%OUTPUT_PATH%\logs\ai_assurance_report.txt"
     echo [OK] Лог батника: "%BAT_LOG%"
     call :log "[STEP 4/4] Успешно. Результат: %OUTPUT_PATH%"
 ) else (
