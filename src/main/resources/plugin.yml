@@ -4,8 +4,6 @@ main: ru.hybridplugin.securityprefix.HybridSecurityPrefixPlugin
 api-version: '1.21'
 authors: ["Hybrid"]
 description: Custom whitelist + auth passwords + prefix system with menu for Paper 1.21.8
-softdepend: [Vault]
-
 commands:
   cwhitelist:
     description: Управление кастомным whitelist
@@ -26,3 +24,6 @@ permissions:
   hybrid.whitelist.admin:
     description: Управление кастомным whitelist
     default: op
+  hybrid.prefix.premium:
+    description: Доступ к премиум-префиксу
+    default: false

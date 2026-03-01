@@ -2,7 +2,6 @@ package ru.hybridplugin.securityprefix.service;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -26,13 +25,11 @@ public class PrefixService {
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final JavaPlugin plugin;
-    private final Economy economy;
     private final File file;
     private YamlConfiguration config;
 
-    public PrefixService(JavaPlugin plugin, Economy economy) {
+    public PrefixService(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.economy = economy;
         this.file = new File(plugin.getDataFolder(), "prefixes.yml");
         load();
     }
@@ -55,7 +52,7 @@ public class PrefixService {
                 List.of("§7Клик: подсказка по команде", "§e/prefix set <текст>")));
 
         inventory.setItem(13, buildItem(Material.EMERALD, "§6Премиум префикс",
-                List.of("§7Стоимость: §e" + getPremiumCost(), "§7Клик: купить/изменить", "§e/prefix premium <текст>")));
+                List.of("§7Доступен по permission:", "§ehybrid.prefix.premium", "§e/prefix premium <текст>")));
 
         inventory.setItem(15, buildItem(Material.BARRIER, "§cУбрать префикс",
                 List.of("§7Сбросить отображение")));
@@ -89,21 +86,11 @@ public class PrefixService {
             return "too_long";
         }
 
-        if (economy == null) {
-            return "no_economy";
+        if (!player.hasPermission("hybrid.prefix.premium")) {
+            return "no_permission";
         }
 
-        double cost = getPremiumCost();
         String path = path(player.getUniqueId());
-        PrefixType type = PrefixType.valueOf(config.getString(path + ".type", PrefixType.NONE.name()));
-
-        if (type != PrefixType.PREMIUM) {
-            if (!economy.has(player, cost)) {
-                return "no_money";
-            }
-            economy.withdrawPlayer(player, cost);
-        }
-
         config.set(path + ".text", ChatColor.translateAlternateColorCodes('&', rawPrefix));
         config.set(path + ".type", PrefixType.PREMIUM.name());
         save();
@@ -134,10 +121,6 @@ public class PrefixService {
 
     public String getMenuTitle() {
         return MENU_TITLE;
-    }
-
-    private double getPremiumCost() {
-        return plugin.getConfig().getDouble("prefix.premium-cost", 1000.0);
     }
 
     private String path(UUID uuid) {

@@ -51,8 +51,7 @@ public class PrefixCommand implements CommandExecutor {
             String result = prefixService.buyAndSetPremium(player, text);
             switch (result) {
                 case "ok" -> player.sendMessage("§aПремиум префикс установлен.");
-                case "no_money" -> player.sendMessage("§cНедостаточно средств.");
-                case "no_economy" -> player.sendMessage("§cЭкономика не подключена (нужен Vault + Economy). ");
+                case "no_permission" -> player.sendMessage("§cУ вас нет доступа к премиум-префиксу.");
                 default -> player.sendMessage("§cПрефикс слишком длинный.");
             }
             return true;
