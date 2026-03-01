@@ -1,0 +1,20 @@
+name: AdaptiveServerCore
+version: 1.0
+main: me.adaptiveservercore.AdaptiveServerCore
+api-version: '1.21'
+author: Hazer_2_0
+description: Плагин изменения роста игроков и автоматизации сервера
+
+commands:
+  height:
+    description: Управление ростом игрока
+    usage: /height <значение>
+
+permissions:
+  height.use:
+    description: Разрешает менять рост
+    default: true
+
+  height.admin:
+    description: Административные команды
+    default: op
