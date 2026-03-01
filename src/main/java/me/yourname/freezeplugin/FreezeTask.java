@@ -40,6 +40,7 @@ public class FreezeTask implements Runnable {
     private final Map<UUID, Double> freezeLevels = new HashMap<>();
     private final Map<UUID, Integer> damageTicks = new HashMap<>();
     private final Map<UUID, Integer> lastStage = new HashMap<>();
+    private final Map<UUID, Integer> titleCooldown = new HashMap<>();
 
     @Override
     public void run() {
@@ -112,6 +113,7 @@ public class FreezeTask implements Runnable {
         freezeLevels.keySet().removeIf(id -> !onlineIds.contains(id));
         damageTicks.keySet().removeIf(id -> !onlineIds.contains(id));
         lastStage.keySet().removeIf(id -> !onlineIds.contains(id));
+        titleCooldown.keySet().removeIf(id -> !onlineIds.contains(id));
     }
 
     private boolean isStandingOnSnow(Player player) {
@@ -249,6 +251,7 @@ public class FreezeTask implements Runnable {
         int stage = getStage(percent);
 
         playStageTransitionFeedback(player, stage);
+        showStageTitle(player, stage, wetClothesCold);
         showAmbientParticles(player, stage);
 
         String trend = getTrend(previousFreeze, freeze);
@@ -277,8 +280,16 @@ public class FreezeTask implements Runnable {
     }
 
     private void showAmbientParticles(Player player, int stage) {
+        if (stage == 1) {
+            player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation().add(0, 1.0, 0), 2, 0.25, 0.2, 0.25, 0.002);
+        }
+
         if (stage >= 2) {
             player.getWorld().spawnParticle(Particle.SNOWFLAKE, player.getLocation().add(0, 1.0, 0), 2, 0.2, 0.25, 0.2, 0.01);
+        }
+
+        if (stage >= 3) {
+            player.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, player.getLocation().add(0, 1.1, 0), 4, 0.25, 0.3, 0.25, 0.01);
         }
     }
 
@@ -325,6 +336,30 @@ public class FreezeTask implements Runnable {
         lastStage.put(id, stage);
     }
 
+    private void showStageTitle(Player player, int stage, boolean wetClothesCold) {
+        UUID id = player.getUniqueId();
+        int cooldown = titleCooldown.getOrDefault(id, 0);
+        if (cooldown > 0) {
+            titleCooldown.put(id, cooldown - 1);
+            return;
+        }
+
+        if (stage == 0) {
+            return;
+        }
+
+        if (stage == 1) {
+            player.sendTitle("§b❄ Прохладно", wetClothesCold ? "§9Из-за мокрой одежды" : "§7Найди источник тепла", 2, 20, 8);
+            titleCooldown.put(id, 8);
+        } else if (stage == 2) {
+            player.sendTitle("§3🥶 Ты замерзаешь", wetClothesCold ? "§9Мокрая одежда охлаждает" : "§7Срочно согрейся", 2, 25, 10);
+            titleCooldown.put(id, 8);
+        } else {
+            player.sendTitle("§b☠ Обморожение", "§fТепло нужно немедленно!", 2, 25, 10);
+            titleCooldown.put(id, 8);
+        }
+    }
+
     private String getTrend(double previousFreeze, double currentFreeze) {
         double diff = currentFreeze - previousFreeze;
         if (diff > 0.15) {
@@ -342,7 +377,13 @@ public class FreezeTask implements Runnable {
         StringBuilder bar = new StringBuilder();
         for (int i = 0; i < HEART_BAR_COUNT; i++) {
             if (i < frozenHearts) {
-                bar.append("§b❤");
+                if (freezePercent >= 80) {
+                    bar.append("§3❤");
+                } else if (freezePercent >= 55) {
+                    bar.append("§b❤");
+                } else {
+                    bar.append("§f❤");
+                }
             } else {
                 bar.append("§7❤");
             }
