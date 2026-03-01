@@ -1,0 +1,22 @@
+name: ResourcePackManager
+version: '1.0.0'
+main: com.hazer.resourcepackmanager.ResourcePackManagerPlugin
+api-version: '1.21'
+author: Hazer_2_0
+description: Automatic resourcepack selector and sender for Paper 1.21.8
+commands:
+  resourcepack:
+    description: Main command for ResourcePackManager
+    usage: /resourcepack <reload|info|accept|decline|status|list|help>
+    permission: resourcepackmanager.command
+    aliases: [rpm, rpack]
+permissions:
+  resourcepackmanager.command:
+    description: Base permission for /resourcepack command
+    default: true
+  resourcepackmanager.admin:
+    description: Allows reloading and administrative access
+    default: op
+  resourcepackmanager.info:
+    description: Allows viewing active resource pack info
+    default: true
