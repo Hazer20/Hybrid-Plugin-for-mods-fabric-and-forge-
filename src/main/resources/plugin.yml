@@ -1,0 +1,15 @@
+name: LightBlockPlugin
+version: 1.0.0
+main: com.hazer.lightblock.LightBlockPlugin
+api-version: '1.21'
+author: Hazer_2_0
+description: Adds craftable invisible Light Blocks with GUI crafting and persistent levels.
+commands:
+  lightblock:
+    description: Opens the Light Block crafting GUI.
+    usage: /lightblock [level]
+    aliases: [lb]
+permissions:
+  lightblock.use:
+    description: Allows using /lightblock.
+    default: true
