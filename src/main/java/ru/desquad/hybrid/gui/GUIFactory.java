@@ -10,7 +10,7 @@ import ru.desquad.hybrid.market.MarketListing;
 import ru.desquad.hybrid.market.MarketManager;
 import ru.desquad.hybrid.market.MarketTransaction;
 import ru.desquad.hybrid.npc.BuilderNPCManager;
-import ru.desquad.hybrid.quest.MiniQuest;
+import ru.desquad.hybrid.quest.ActiveQuest;
 import ru.desquad.hybrid.quest.QuestManager;
 import ru.desquad.hybrid.util.ItemBuilder;
 
@@ -69,20 +69,24 @@ public class GUIFactory {
 
     public static Inventory createQuestGUI(Player player, QuestManager manager) {
         Inventory inv = Bukkit.createInventory(player, 54, "§8Мини-квесты DES");
-        List<MiniQuest> quests = manager.getAssignedQuests(player.getUniqueId());
+        List<ActiveQuest> quests = manager.getAssignedQuests(player.getUniqueId());
         int slot = 10;
-        for (MiniQuest quest : quests) {
+        for (ActiveQuest quest : quests) {
             Material m = switch (quest.getDifficulty()) {
                 case EASY -> Material.LIME_WOOL;
                 case MEDIUM -> Material.YELLOW_WOOL;
                 case HARD -> Material.RED_WOOL;
             };
+            String status = quest.isClaimed() ? "&7Уже получена" : (quest.isCompleted() ? "&aГотово к получению" : "&cНе выполнено");
             inv.setItem(slot++, new ItemBuilder(m)
                     .name("&6" + quest.getDescription())
                     .lore(List.of(
                             "&7Сложность: &f" + quest.getDifficulty().getDisplay(),
                             "&7Награда: &6" + quest.getReward() + " DESCoin",
-                            "&aНажми для симуляции выполнения"
+                            "&7Прогресс: &f" + quest.getProgress() + "/" + quest.getTarget(),
+                            "&7Статус: " + status,
+                            "&eНажми для проверки и получения",
+                            "&8ID:" + quest.getId()
                     )).build());
         }
         inv.setItem(49, new ItemBuilder(Material.CLOCK)

@@ -6,7 +6,7 @@ import java.util.List;
 public class PlayerQuestState {
     private long lastResetEpochDay;
     private int completedToday;
-    private List<String> assignedQuestIds = new ArrayList<>();
+    private List<String> assignedQuestIds = new ArrayList<>(); // serialized ActiveQuest lines
 
     public long getLastResetEpochDay() {
         return lastResetEpochDay;

@@ -11,7 +11,6 @@ import ru.desquad.hybrid.DESHybridPlugin;
 import ru.desquad.hybrid.market.MarketListing;
 import ru.desquad.hybrid.market.MarketManager;
 import ru.desquad.hybrid.npc.BuilderNPCManager;
-import ru.desquad.hybrid.quest.MiniQuest;
 import ru.desquad.hybrid.quest.QuestManager;
 
 import java.util.LinkedHashMap;
@@ -178,19 +177,22 @@ public class GUIListener implements Listener {
     }
 
     private void handleQuestGui(Player player, ItemStack item) {
-        if (item == null || item.getType().isAir()) return;
-        List<MiniQuest> quests = questManager.getAssignedQuests(player.getUniqueId());
-        String name = item.getItemMeta() != null && item.getItemMeta().displayName() != null
-                ? PLAIN.serialize(item.getItemMeta().displayName()) : "";
-        for (MiniQuest quest : quests) {
-            if (name.contains(quest.getDescription())) {
-                boolean done = questManager.completeQuest(player, quest.getId());
-                if (done) {
-                    player.openInventory(GUIFactory.createQuestGUI(player, questManager));
-                }
-                return;
+        if (item == null || item.getType().isAir() || item.getItemMeta() == null || item.getItemMeta().lore() == null) return;
+        String questId = null;
+        for (var line : item.getItemMeta().lore()) {
+            String text = PLAIN.serialize(line);
+            if (text.startsWith("ID:")) {
+                questId = text.substring(3);
+                break;
             }
         }
+        if (questId == null) return;
+
+        boolean claimed = questManager.tryClaimQuest(player, questId);
+        if (!claimed) {
+            player.sendMessage("§cКвест ещё не выполнен или награда уже получена.");
+        }
+        player.openInventory(GUIFactory.createQuestGUI(player, questManager));
     }
 
     private void handleMarketGui(Player player, ItemStack item, int slot) {

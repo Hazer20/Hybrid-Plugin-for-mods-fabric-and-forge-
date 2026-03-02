@@ -16,6 +16,7 @@ import ru.desquad.hybrid.npc.NPCInteractListener;
 import ru.desquad.hybrid.npc.NPCTokenUseListener;
 import ru.desquad.hybrid.quest.QuestListener;
 import ru.desquad.hybrid.quest.QuestManager;
+import ru.desquad.hybrid.quest.QuestStatusBoardService;
 import ru.desquad.hybrid.storage.DataStorage;
 import ru.desquad.hybrid.storage.SQLiteStorage;
 import ru.desquad.hybrid.storage.YamlStorage;
@@ -34,6 +35,7 @@ public class DESHybridPlugin extends JavaPlugin {
     private QuestManager questManager;
     private MarketManager marketManager;
     private BuilderNPCManager builderNPCManager;
+    private QuestStatusBoardService questStatusBoardService;
 
     @Override
     public void onEnable() {
@@ -52,12 +54,14 @@ public class DESHybridPlugin extends JavaPlugin {
         questManager = new QuestManager(this, dataStorage, economyManager);
         marketManager = new MarketManager(this, dataStorage, economyManager);
         builderNPCManager = new BuilderNPCManager(this, economyManager, dataStorage);
+        questStatusBoardService = new QuestStatusBoardService(this, questManager);
 
         registerCommands();
         registerListeners();
 
         builderNPCManager.spawnOrRespawnNPC();
         questManager.startDailyResetTask();
+        questStatusBoardService.start();
         getLogger().info("DESHybridPlugin успешно запущен!");
     }
 
@@ -71,6 +75,9 @@ public class DESHybridPlugin extends JavaPlugin {
         }
         if (builderNPCManager != null) {
             builderNPCManager.cleanup();
+        }
+        if (questStatusBoardService != null) {
+            questStatusBoardService.stop();
         }
         if (dataStorage != null) {
             dataStorage.close();
@@ -87,7 +94,7 @@ public class DESHybridPlugin extends JavaPlugin {
     }
 
     private void registerListeners() {
-        Bukkit.getPluginManager().registerEvents(new QuestListener(this, questManager), this);
+        Bukkit.getPluginManager().registerEvents(new QuestListener(questManager), this);
         Bukkit.getPluginManager().registerEvents(new GUIListener(this, questManager, marketManager, builderNPCManager), this);
         Bukkit.getPluginManager().registerEvents(new NPCChatListener(this, builderNPCManager), this);
         Bukkit.getPluginManager().registerEvents(new NPCInteractListener(this, builderNPCManager), this);
