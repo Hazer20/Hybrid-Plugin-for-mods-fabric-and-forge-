@@ -86,7 +86,9 @@ public class RadioPlacementListener implements Listener {
             return;
         }
 
-        String channel = placedRegistry.getChannel(radioBlock.getLocation());
+        final Block targetRadioBlock = radioBlock;
+
+        String channel = placedRegistry.getChannel(targetRadioBlock.getLocation());
         if (channel == null) {
             return;
         }
@@ -101,15 +103,15 @@ public class RadioPlacementListener implements Listener {
                 ? "§bКанал [" + channel + "]: одна из раций перешла в режим ответа. Для прослушки выключите рычаг."
                 : "§bКанал [" + channel + "]: рация вернулась в режим прослушки.";
 
-        radioBlock.getWorld().getPlayers().forEach(player -> {
-            if (player.getLocation().distance(radioBlock.getLocation()) <= radius) {
+        targetRadioBlock.getWorld().getPlayers().forEach(player -> {
+            if (player.getLocation().distance(targetRadioBlock.getLocation()) <= radius) {
                 player.sendMessage(ownMessage);
             }
         });
 
-        placedRegistry.findByChannel(radioBlock.getWorld(), channel, radioBlock.getLocation(), plugin.getConfig().getInt("radio.max-channel-range", 256))
+        placedRegistry.findByChannel(targetRadioBlock.getWorld(), channel, targetRadioBlock.getLocation(), plugin.getConfig().getInt("radio.max-channel-range", 256))
                 .stream()
-                .filter(loc -> loc.distance(radioBlock.getLocation()) > 1.0)
+                .filter(loc -> loc.distance(targetRadioBlock.getLocation()) > 1.0)
                 .forEach(loc -> loc.getWorld().getPlayers().forEach(player -> {
                     if (player.getLocation().distance(loc) <= radius) {
                         player.sendMessage(remoteMessage);
