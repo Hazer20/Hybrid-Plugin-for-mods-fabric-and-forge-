@@ -137,8 +137,9 @@ public class BuilderNPCManager {
                 String file = p.getFileName().toString().toLowerCase(Locale.ROOT);
                 formatType = file.endsWith(".litematic") ? "litematic" : (file.endsWith(".schem") ? "schem" : "schematic");
                 complexity = 1.0;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 plugin.getLogger().warning("Ошибка парсинга схемы " + key + ": " + e.getMessage());
+                plugin.getLogger().warning("Проверь, что на сервер загружен shaded JAR плагина, а не original-*.jar");
                 return null;
             }
         } else {
