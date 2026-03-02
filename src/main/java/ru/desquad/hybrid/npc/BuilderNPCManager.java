@@ -5,7 +5,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
@@ -47,12 +46,16 @@ public class BuilderNPCManager {
     public void spawnNpcAt(Location location) {
         if (!plugin.getConfig().getBoolean("npc-builder.enabled", true)) return;
         if (npc != null && !npc.isDead()) npc.remove();
+
         npcName = randomName();
         npc = (Villager) location.getWorld().spawnEntity(location, EntityType.VILLAGER);
         npc.customName(Component.text("§6" + npcName + " §7[Строитель]"));
         npc.setCustomNameVisible(true);
         npc.setAI(false);
         npc.setInvulnerable(true);
+        npc.setRemoveWhenFarAway(false);
+        npc.setPersistent(true);
+        npc.setCollidable(false);
         npc.setProfession(Villager.Profession.TOOLSMITH);
     }
 
@@ -116,36 +119,30 @@ public class BuilderNPCManager {
         ConfigurationSection sec = plugin.getConfig().getConfigurationSection("npc-builder.schematics." + key);
         if (sec == null) return null;
 
-        int blocks = sec.getInt("block-count", 100);
+        int sx = sec.getInt("size-x", plugin.getConfig().getInt("npc-builder.default-zone.size-x", 16));
+        int sy = sec.getInt("size-y", plugin.getConfig().getInt("npc-builder.default-zone.size-y", 16));
+        int sz = sec.getInt("size-z", plugin.getConfig().getInt("npc-builder.default-zone.size-z", 16));
+
+        List<Material> palette = parsePalette(sec);
+        List<PlannedBlock> plan = parseOrGeneratePlan(sec, sx, sy, sz, palette);
+        int blocks = plan.size();
+
         double complexity = sec.getDouble("complexity", 1.0);
         double base = plugin.getConfig().getDouble("npc-builder.growth.base-descoin", 25);
         double blockFactor = plugin.getConfig().getDouble("npc-builder.growth.block-cost-factor", 0.1);
         double complexityFactor = plugin.getConfig().getDouble("npc-builder.growth.complexity-factor", 0.8);
         int baseExp = plugin.getConfig().getInt("npc-builder.growth.base-exp", 5);
         double expFactor = plugin.getConfig().getDouble("npc-builder.growth.exp-block-factor", 0.02);
-
         double descoin = base + blocks * blockFactor + complexity * complexityFactor * 100;
         int exp = (int) Math.ceil(baseExp + blocks * expFactor + complexity * 5);
 
         Location npcLoc = npc != null ? npc.getLocation() : player.getLocation();
-        int sx = sec.getInt("size-x", plugin.getConfig().getInt("npc-builder.default-zone.size-x", 16));
-        int sy = sec.getInt("size-y", plugin.getConfig().getInt("npc-builder.default-zone.size-y", 16));
-        int sz = sec.getInt("size-z", plugin.getConfig().getInt("npc-builder.default-zone.size-z", 16));
-
         Map<String, Integer> resources = new LinkedHashMap<>();
         ConfigurationSection rSec = sec.getConfigurationSection("resources");
-        if (rSec != null) {
-            for (String mat : rSec.getKeys(false)) resources.put(mat, rSec.getInt(mat));
-        }
-
-        List<Material> palette = new ArrayList<>();
-        for (String s : sec.getStringList("palette")) {
-            try { palette.add(Material.valueOf(s)); } catch (IllegalArgumentException ignored) {}
-        }
-        if (palette.isEmpty()) palette.add(Material.STONE);
+        if (rSec != null) for (String mat : rSec.getKeys(false)) resources.put(mat, rSec.getInt(mat));
 
         return new BuildQuote(key, sec.getString("display-name", key), sec.getString("type", "schematic"), descoin, exp,
-                resources, palette, npcLoc.getBlockX() + 2, npcLoc.getBlockY(), npcLoc.getBlockZ() + 2, sx, sy, sz, blocks);
+                resources, npcLoc.getBlockX() + 2, npcLoc.getBlockY(), npcLoc.getBlockZ() + 2, sx, sy, sz, blocks, plan);
     }
 
     public void startBuild(Player player, BuildQuote quote) {
@@ -167,32 +164,31 @@ public class BuilderNPCManager {
         BossBar bar = BossBar.bossBar(Component.text("§6Строительство: 0%"), 0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
         player.showBossBar(bar);
 
-        List<Villager> workers = spawnWorkers(quote);
-        int targetBlocks = quote.blockCount();
+        List<Villager> helpers = spawnHelpers();
+        int targetBlocks = Math.max(1, quote.plan().size());
         int placePerStep = Math.max(1, plugin.getConfig().getInt("npc-builder.workers.place-blocks-per-step", 3));
 
         new BukkitRunnable() {
-            int placed = 0;
+            int cursor = 0;
 
             @Override
             public void run() {
                 int stepPlaced = 0;
-                while (stepPlaced < placePerStep && placed < targetBlocks) {
-                    placeRandomBlock(quote);
+                while (stepPlaced < placePerStep && cursor < quote.plan().size()) {
+                    placePlannedBlock(quote, quote.plan().get(cursor));
+                    cursor++;
                     stepPlaced++;
-                    placed++;
                 }
 
-                moveWorkers(workers, quote);
-                float progress = Math.min(1f, placed / (float) targetBlocks);
+                moveWorkers(helpers, quote);
+                float progress = Math.min(1f, cursor / (float) targetBlocks);
                 bar.progress(progress);
                 bar.name(Component.text("§6Строительство: " + (int) (progress * 100) + "% | " + quote.displayName()));
 
-                if (placed % Math.max(20, targetBlocks / 8) == 0) npcComment(player);
-
-                if (progress >= 1f) {
+                if (cursor % Math.max(20, targetBlocks / 8) == 0) npcComment(player);
+                if (cursor >= quote.plan().size()) {
                     cancel();
-                    workers.forEach(Entity::remove);
+                    helpers.forEach(Villager::remove);
                     player.hideBossBar(bar);
                     player.sendMessage(colorMsg("messages.build-confirmed") + " §7(" + quote.displayName() + ")");
                     playConfigSound(player, "npc-builder.sounds.complete");
@@ -201,25 +197,27 @@ public class BuilderNPCManager {
         }.runTaskTimer(plugin, 0L, 10L);
     }
 
-    private List<Villager> spawnWorkers(BuildQuote quote) {
-        List<Villager> workers = new ArrayList<>();
-        if (npc != null && !npc.isDead()) workers.add(npc);
+    private List<Villager> spawnHelpers() {
+        List<Villager> helpers = new ArrayList<>();
         boolean dual = plugin.getConfig().getBoolean("npc-builder.workers.dual-builders", true);
-        if (dual && npc != null && !npc.isDead()) {
-            Location secondLoc = npc.getLocation().clone().add(1.5, 0, 0);
-            Villager second = (Villager) npc.getWorld().spawnEntity(secondLoc, EntityType.VILLAGER);
-            second.customName(Component.text("§6" + ("Равшан".equals(npcName) ? "Джамшут" : "Равшан") + " §7[Помощник]"));
-            second.setCustomNameVisible(true);
-            second.setInvulnerable(true);
-            second.setAI(false);
-            workers.add(second);
-        }
-        return workers;
+        if (!dual || npc == null || npc.isDead()) return helpers;
+
+        Location secondLoc = npc.getLocation().clone().add(1.5, 0, 0);
+        Villager second = (Villager) npc.getWorld().spawnEntity(secondLoc, EntityType.VILLAGER);
+        second.customName(Component.text("§6" + ("Равшан".equals(npcName) ? "Джамшут" : "Равшан") + " §7[Помощник]"));
+        second.setCustomNameVisible(true);
+        second.setInvulnerable(true);
+        second.setRemoveWhenFarAway(false);
+        second.setPersistent(true);
+        second.setAI(false);
+        second.setCollidable(false);
+        helpers.add(second);
+        return helpers;
     }
 
-    private void moveWorkers(List<Villager> workers, BuildQuote quote) {
+    private void moveWorkers(List<Villager> helpers, BuildQuote quote) {
         int radius = plugin.getConfig().getInt("npc-builder.workers.step-radius", 4);
-        for (Villager worker : workers) {
+        for (Villager worker : helpers) {
             if (worker == null || worker.isDead()) continue;
             Location base = new Location(worker.getWorld(), quote.x(), quote.y(), quote.z());
             double dx = random.nextInt(radius * 2 + 1) - radius;
@@ -231,20 +229,68 @@ public class BuilderNPCManager {
         }
     }
 
-    private void placeRandomBlock(BuildQuote quote) {
+    private void placePlannedBlock(BuildQuote quote, PlannedBlock planned) {
         World world = npc != null ? npc.getWorld() : Bukkit.getWorld(plugin.getConfig().getString("npc-builder.spawn-world", "world"));
         if (world == null) return;
 
-        int x = quote.x() + random.nextInt(Math.max(1, quote.sizeX()));
-        int y = quote.y() + random.nextInt(Math.max(1, quote.sizeY()));
-        int z = quote.z() + random.nextInt(Math.max(1, quote.sizeZ()));
-        Material material = quote.palette().get(random.nextInt(quote.palette().size()));
+        int x = quote.x() + planned.dx();
+        int y = quote.y() + planned.dy();
+        int z = quote.z() + planned.dz();
         Block block = world.getBlockAt(x, y, z);
+        block.setType(planned.material(), false);
+        world.playSound(block.getLocation(), Sound.BLOCK_STONE_PLACE, 0.4f, 1.15f);
+    }
 
-        if (block.getType().isAir() || block.isPassable()) {
-            block.setType(material, false);
-            world.playSound(block.getLocation(), Sound.BLOCK_STONE_PLACE, 0.5f, 1.2f);
+    private List<Material> parsePalette(ConfigurationSection sec) {
+        List<Material> palette = new ArrayList<>();
+        for (String s : sec.getStringList("palette")) {
+            try {
+                palette.add(Material.valueOf(s));
+            } catch (IllegalArgumentException ignored) {}
         }
+        if (palette.isEmpty()) palette.add(Material.STONE);
+        return palette;
+    }
+
+    private List<PlannedBlock> parseOrGeneratePlan(ConfigurationSection sec, int sx, int sy, int sz, List<Material> palette) {
+        List<String> blockLines = sec.getStringList("blocks");
+        List<PlannedBlock> plan = new ArrayList<>();
+
+        for (String line : blockLines) {
+            // формат: x,y,z,MATERIAL
+            String[] p = line.split(",");
+            if (p.length != 4) continue;
+            try {
+                int dx = Integer.parseInt(p[0].trim());
+                int dy = Integer.parseInt(p[1].trim());
+                int dz = Integer.parseInt(p[2].trim());
+                Material material = Material.valueOf(p[3].trim().toUpperCase());
+                plan.add(new PlannedBlock(dx, dy, dz, material));
+            } catch (Exception ignored) {}
+        }
+
+        if (!plan.isEmpty()) {
+            plan.sort(Comparator.comparingInt(PlannedBlock::dy).thenComparingInt(PlannedBlock::dx).thenComparingInt(PlannedBlock::dz));
+            return plan;
+        }
+
+        // fallback: детерминированная «схема» без хаоса, строгий проход по координатам
+        int pi = 0;
+        for (int y = 0; y < sy; y++) {
+            for (int x = 0; x < sx; x++) {
+                for (int z = 0; z < sz; z++) {
+                    boolean floor = y == 0;
+                    boolean wall = x == 0 || x == sx - 1 || z == 0 || z == sz - 1;
+                    boolean roof = y == sy - 1;
+                    if (floor || wall || roof) {
+                        Material material = palette.get(pi % palette.size());
+                        plan.add(new PlannedBlock(x, y, z, material));
+                        pi++;
+                    }
+                }
+            }
+        }
+        return plan;
     }
 
     public void npcComment(Player player) {
@@ -276,7 +322,10 @@ public class BuilderNPCManager {
         }
     }
 
+    public record PlannedBlock(int dx, int dy, int dz, Material material) {}
+
     public record BuildQuote(String key, String displayName, String formatType, double descoin, int expLevels,
-                             Map<String, Integer> resources, List<Material> palette,
-                             int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockCount) {}
+                             Map<String, Integer> resources,
+                             int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockCount,
+                             List<PlannedBlock> plan) {}
 }
