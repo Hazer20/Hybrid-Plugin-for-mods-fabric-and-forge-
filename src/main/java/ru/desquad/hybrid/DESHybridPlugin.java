@@ -5,12 +5,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.desquad.hybrid.command.DESCoinCommand;
 import ru.desquad.hybrid.command.MarketCommand;
 import ru.desquad.hybrid.command.QuestsCommand;
+import ru.desquad.hybrid.command.NPCCraftCommand;
 import ru.desquad.hybrid.economy.EconomyManager;
 import ru.desquad.hybrid.gui.GUIListener;
 import ru.desquad.hybrid.market.MarketManager;
 import ru.desquad.hybrid.npc.BuilderNPCManager;
 import ru.desquad.hybrid.npc.NPCChatListener;
 import ru.desquad.hybrid.npc.NPCInteractListener;
+import ru.desquad.hybrid.npc.NPCTokenUseListener;
 import ru.desquad.hybrid.quest.QuestListener;
 import ru.desquad.hybrid.quest.QuestManager;
 import ru.desquad.hybrid.storage.DataStorage;
@@ -48,7 +50,7 @@ public class DESHybridPlugin extends JavaPlugin {
         economyManager = new EconomyManager(this, dataStorage);
         questManager = new QuestManager(this, dataStorage, economyManager);
         marketManager = new MarketManager(this, dataStorage, economyManager);
-        builderNPCManager = new BuilderNPCManager(this, economyManager);
+        builderNPCManager = new BuilderNPCManager(this, economyManager, dataStorage);
 
         registerCommands();
         registerListeners();
@@ -79,6 +81,7 @@ public class DESHybridPlugin extends JavaPlugin {
         getCommand("descoin").setExecutor(new DESCoinCommand(this, economyManager));
         getCommand("desquests").setExecutor(new QuestsCommand(questManager));
         getCommand("desmarket").setExecutor(new MarketCommand(marketManager));
+        getCommand("desnpccraft").setExecutor(new NPCCraftCommand(this, builderNPCManager));
     }
 
     private void registerListeners() {
@@ -86,6 +89,7 @@ public class DESHybridPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new GUIListener(this, questManager, marketManager, builderNPCManager), this);
         Bukkit.getPluginManager().registerEvents(new NPCChatListener(this, builderNPCManager), this);
         Bukkit.getPluginManager().registerEvents(new NPCInteractListener(this, builderNPCManager), this);
+        Bukkit.getPluginManager().registerEvents(new NPCTokenUseListener(builderNPCManager), this);
     }
 
     public EconomyManager getEconomyManager() {

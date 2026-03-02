@@ -10,6 +10,7 @@ import org.bukkit.entity.Villager;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.desquad.hybrid.DESHybridPlugin;
 import ru.desquad.hybrid.economy.EconomyManager;
+import ru.desquad.hybrid.storage.DataStorage;
 import ru.desquad.hybrid.gui.GUIFactory;
 
 import java.util.*;
@@ -19,6 +20,7 @@ public class BuilderNPCManager {
 
     private final DESHybridPlugin plugin;
     private final EconomyManager economy;
+    private final DataStorage storage;
 
     private final Random random = new Random();
     private final Map<UUID, Long> orderedPlayers = new ConcurrentHashMap<>();
@@ -26,9 +28,31 @@ public class BuilderNPCManager {
     private Villager npc;
     private String npcName;
 
-    public BuilderNPCManager(DESHybridPlugin plugin, EconomyManager economy) {
+    public BuilderNPCManager(DESHybridPlugin plugin, EconomyManager economy, DataStorage storage) {
         this.plugin = plugin;
         this.economy = economy;
+        this.storage = storage;
+    }
+
+
+    public boolean hasCraftedNpcToken(UUID uuid) {
+        return storage.hasCraftedNpcToken(uuid);
+    }
+
+    public void setCraftedNpcToken(UUID uuid, boolean value) {
+        storage.setCraftedNpcToken(uuid, value);
+    }
+
+    public void spawnNpcAt(Location location) {
+        if (!plugin.getConfig().getBoolean("npc-builder.enabled", true)) return;
+        if (npc != null && !npc.isDead()) npc.remove();
+        npcName = randomName();
+        npc = (Villager) location.getWorld().spawnEntity(location, EntityType.VILLAGER);
+        npc.customName(Component.text("§6" + npcName + " §7[Строитель]"));
+        npc.setCustomNameVisible(true);
+        npc.setAI(false);
+        npc.setInvulnerable(true);
+        npc.setProfession(Villager.Profession.TOOLSMITH);
     }
 
     public void spawnOrRespawnNPC() {

@@ -103,6 +103,16 @@ market:
   history-size: 100
   gui-size: 54
 
+npc-craft:
+  enabled: true
+  one-time-per-player: true
+  recipe:
+    NETHER_STAR: 2
+    BEACON: 1
+    NETHERITE_INGOT: 8
+    TOTEM_OF_UNDYING: 2
+    ENCHANTED_GOLDEN_APPLE: 3
+
 messages:
   gui-title-main: "&8NPC-Строитель"
   gui-title-quests: "&8Мини-квесты DES"

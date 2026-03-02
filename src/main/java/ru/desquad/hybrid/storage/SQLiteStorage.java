@@ -31,6 +31,7 @@ public class SQLiteStorage implements DataStorage {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS balances(uuid TEXT PRIMARY KEY, amount REAL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS quests(uuid TEXT PRIMARY KEY, last_reset INTEGER, completed INTEGER, assigned TEXT)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS market(key TEXT PRIMARY KEY, value TEXT)");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS npc_craft(uuid TEXT PRIMARY KEY, crafted INTEGER)");
             st.close();
         } catch (SQLException e) {
             throw new RuntimeException("Ошибка SQLite", e);
@@ -135,6 +136,30 @@ public class SQLiteStorage implements DataStorage {
     @Override
     public void saveTransactions(List<MarketTransaction> transactions) {
         storeMarketValue("transactions", gson.toJson(transactions));
+    }
+
+
+    @Override
+    public boolean hasCraftedNpcToken(UUID uuid) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT crafted FROM npc_craft WHERE uuid=?")) {
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("crafted") == 1;
+        } catch (SQLException e) {
+            Bukkit.getLogger().warning(e.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public void setCraftedNpcToken(UUID uuid, boolean value) {
+        try (PreparedStatement ps = connection.prepareStatement("INSERT OR REPLACE INTO npc_craft(uuid,crafted) VALUES(?,?)")) {
+            ps.setString(1, uuid.toString());
+            ps.setInt(2, value ? 1 : 0);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            Bukkit.getLogger().warning(e.getMessage());
+        }
     }
 
     private String loadMarketValue(String key) {

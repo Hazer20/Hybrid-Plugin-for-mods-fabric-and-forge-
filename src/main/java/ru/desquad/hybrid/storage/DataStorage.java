@@ -24,4 +24,7 @@ public interface DataStorage {
 
     List<MarketTransaction> getTransactions();
     void saveTransactions(List<MarketTransaction> transactions);
+
+    boolean hasCraftedNpcToken(UUID uuid);
+    void setCraftedNpcToken(UUID uuid, boolean value);
 }

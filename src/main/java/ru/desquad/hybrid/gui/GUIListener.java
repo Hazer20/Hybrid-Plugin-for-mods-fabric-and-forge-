@@ -1,5 +1,6 @@
 package ru.desquad.hybrid.gui;
 
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,9 +14,13 @@ import ru.desquad.hybrid.npc.BuilderNPCManager;
 import ru.desquad.hybrid.quest.MiniQuest;
 import ru.desquad.hybrid.quest.QuestManager;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GUIListener implements Listener {
+
+    private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
 
     private final DESHybridPlugin plugin;
     private final QuestManager questManager;
@@ -32,7 +37,7 @@ public class GUIListener implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        String title = event.getView().title().toString();
+        String title = PLAIN.serialize(event.getView().title());
 
         if (title.contains("NPC-Строитель")) {
             event.setCancelled(true);
@@ -56,7 +61,73 @@ public class GUIListener implements Listener {
         }
         if (title.contains("История сделок")) {
             event.setCancelled(true);
+            return;
         }
+        if (title.contains("Крафт призыва NPC")) {
+            event.setCancelled(true);
+            handleNpcCraftGui(player, event.getCurrentItem(), event.getSlot());
+        }
+    }
+
+    private void handleNpcCraftGui(Player player, ItemStack item, int slot) {
+        if (slot == 49) {
+            player.closeInventory();
+            return;
+        }
+        if (slot != 31 || item == null || item.getType() != Material.EMERALD_BLOCK) return;
+        if (npcManager.hasCraftedNpcToken(player.getUniqueId()) && plugin.getConfig().getBoolean("npc-craft.one-time-per-player", true)) {
+            player.sendMessage("§cТы уже создавал предмет призыва NPC.");
+            player.closeInventory();
+            return;
+        }
+
+        Map<Material, Integer> recipe = new LinkedHashMap<>();
+        if (plugin.getConfig().getConfigurationSection("npc-craft.recipe") != null) {
+            for (String key : plugin.getConfig().getConfigurationSection("npc-craft.recipe").getKeys(false)) {
+                try {
+                    recipe.put(Material.valueOf(key), plugin.getConfig().getInt("npc-craft.recipe." + key));
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        }
+
+        for (Map.Entry<Material, Integer> entry : recipe.entrySet()) {
+            if (count(player, entry.getKey()) < entry.getValue()) {
+                player.sendMessage("§cНедостаточно ресурсов для сложного крафта: " + entry.getKey().name() + " x" + entry.getValue());
+                return;
+            }
+        }
+
+        for (Map.Entry<Material, Integer> entry : recipe.entrySet()) {
+            remove(player, entry.getKey(), entry.getValue());
+        }
+
+        player.getInventory().addItem(GUIFactory.createNpcTokenItem());
+        npcManager.setCraftedNpcToken(player.getUniqueId(), true);
+        player.sendMessage("§aКрафт завершён! Ты получил предмет призыва NPC (доступно только 1 раз). ");
+        player.closeInventory();
+    }
+
+    private int count(Player player, Material material) {
+        int count = 0;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType() == material) count += stack.getAmount();
+        }
+        return count;
+    }
+
+    private void remove(Player player, Material material, int amount) {
+        int left = amount;
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int i = 0; i < contents.length && left > 0; i++) {
+            ItemStack stack = contents[i];
+            if (stack == null || stack.getType() != material) continue;
+            int take = Math.min(left, stack.getAmount());
+            stack.setAmount(stack.getAmount() - take);
+            left -= take;
+            if (stack.getAmount() <= 0) contents[i] = null;
+        }
+        player.getInventory().setContents(contents);
     }
 
     private void handleNpcGui(Player player, ItemStack item, int slot) {
@@ -100,11 +171,7 @@ public class GUIListener implements Listener {
             player.openInventory(GUIFactory.createMainNPCGUI(plugin, player, npcManager));
             return;
         }
-        String key = item.getItemMeta().displayName().toString().replace("§6", "");
-        key = key.replace("TextComponentImpl{content=", "").replace("}", "").trim();
-        if (key.contains("content=")) {
-            key = key.substring(key.indexOf("content=") + 8).replace("'", "").replace("]", "");
-        }
+        String key = PLAIN.serialize(item.getItemMeta().displayName());
         npcManager.selectSchematic(player, key);
         player.sendMessage("§aСхематика выбрана: §f" + key);
         player.openInventory(GUIFactory.createMainNPCGUI(plugin, player, npcManager));
@@ -113,9 +180,10 @@ public class GUIListener implements Listener {
     private void handleQuestGui(Player player, ItemStack item) {
         if (item == null || item.getType().isAir()) return;
         List<MiniQuest> quests = questManager.getAssignedQuests(player.getUniqueId());
+        String name = item.getItemMeta() != null && item.getItemMeta().displayName() != null
+                ? PLAIN.serialize(item.getItemMeta().displayName()) : "";
         for (MiniQuest quest : quests) {
-            if (item.getItemMeta() != null && item.getItemMeta().displayName() != null
-                    && item.getItemMeta().displayName().toString().contains(quest.getDescription())) {
+            if (name.contains(quest.getDescription())) {
                 boolean done = questManager.completeQuest(player, quest.getId());
                 if (done) {
                     player.openInventory(GUIFactory.createQuestGUI(player, questManager));

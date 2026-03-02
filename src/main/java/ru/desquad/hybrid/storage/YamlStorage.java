@@ -125,6 +125,17 @@ public class YamlStorage implements DataStorage {
         saveNow();
     }
 
+    @Override
+    public boolean hasCraftedNpcToken(UUID uuid) {
+        return data.getBoolean("npc-crafted." + uuid, false);
+    }
+
+    @Override
+    public void setCraftedNpcToken(UUID uuid, boolean value) {
+        data.set("npc-crafted." + uuid, value);
+        saveNow();
+    }
+
     private void saveNow() {
         try {
             data.save(file);

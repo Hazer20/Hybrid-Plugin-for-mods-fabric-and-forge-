@@ -140,6 +140,30 @@ public class GUIFactory {
         return inv;
     }
 
+
+    public static Inventory createNpcCraftGUI(Player player) {
+        Inventory inv = Bukkit.createInventory(player, 54, "§8Крафт призыва NPC");
+
+        ItemStack filler = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).name("&8 ").build();
+        for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, filler);
+
+        inv.setItem(10, new ItemBuilder(Material.NETHER_STAR).name("&6Ядро стройки").lore(List.of("&7Редкий компонент" )).build());
+        inv.setItem(12, new ItemBuilder(Material.BEACON).name("&6Маяк начальника").lore(List.of("&7Нужен для связи с Равшаном/Джамшутом")).build());
+        inv.setItem(14, new ItemBuilder(Material.NETHERITE_INGOT).name("&6Слиток контроля").lore(List.of("&7Очень дорогой металл")).build());
+        inv.setItem(16, new ItemBuilder(Material.TOTEM_OF_UNDYING).name("&6Тотем бригадира").lore(List.of("&7Без него никак")).build());
+        inv.setItem(22, new ItemBuilder(Material.ENCHANTED_GOLDEN_APPLE).name("&6Сердце объекта").lore(List.of("&7Экстремально редкий ресурс")).build());
+        inv.setItem(31, new ItemBuilder(Material.EMERALD_BLOCK).name("&aСОЗДАТЬ ПРЕДМЕТ NPC").lore(List.of("&cКрафт доступен только 1 раз на игрока", "&7Проверяются предметы в инвентаре")).build());
+        inv.setItem(49, new ItemBuilder(Material.BARRIER).name("&cЗакрыть").build());
+        return inv;
+    }
+
+    public static ItemStack createNpcTokenItem() {
+        return new ItemBuilder(Material.VILLAGER_SPAWN_EGG)
+                .name("&6Призыв строителя DE Squad")
+                .lore(List.of("&7Используй ПКМ по блоку", "&7чтобы поставить Равшана/Джамшута", "&cОдноразовый предмет"))
+                .build();
+    }
+
     private static String color(String s) {
         return s.replace('&', '§');
     }
