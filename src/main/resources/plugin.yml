@@ -1,0 +1,37 @@
+name: DESHybridPlugin
+version: 1.0.0
+main: ru.desquad.hybrid.DESHybridPlugin
+api-version: '1.21'
+author: Hazer_2_0
+description: Полная система экономики DESCoin, NPC-строителя, квестов и рынка
+commands:
+  descoin:
+    description: Управление валютой DESCoin
+    usage: /descoin <give|balance|pay>
+  desquests:
+    description: Открыть меню мини-квестов
+    usage: /desquests
+  desmarket:
+    description: Открыть рынок игроков
+    usage: /desmarket
+  desnpccraft:
+    description: Открыть интерфейс крафта NPC
+    usage: /desnpccraft
+  deshelp:
+    description: Помощь по плагину
+    usage: /deshelp
+  desschematic:
+    description: Управление внешними схемами
+    usage: /desschematic <list|addurl>
+permissions:
+  descoin.admin:
+    description: Админ-команды DESCoin
+    default: op
+
+  desnpccraft.admin:
+    description: Админ-команды крафта/выдачи NPC
+    default: op
+
+  desschematic.use:
+    description: Использование команды загрузки схем
+    default: true

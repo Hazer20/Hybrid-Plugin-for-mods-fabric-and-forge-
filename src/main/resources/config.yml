@@ -1,0 +1,155 @@
+storage:
+  type: YAML # YAML или SQLITE
+  sqlite-file: des_data.db
+
+descoin:
+  starting-balance: 0
+  transfer-tax: 0.0
+  messages:
+    prefix: "&6[DES]&r "
+    only-players: "&cЭту команду может использовать только игрок."
+    no-permission: "&cУ вас нет прав."
+    invalid-number: "&cВведите корректное число."
+    player-not-found: "&cИгрок не найден."
+    gave: "&aВы выдали {amount} DESCoin игроку {target}."
+    received: "&aВы получили {amount} DESCoin от администратора."
+    balance-self: "&eВаш баланс: &6{amount} DESCoin"
+    balance-other: "&eБаланс игрока {target}: &6{amount} DESCoin"
+    pay-success-sender: "&aВы перевели {amount} DESCoin игроку {target}."
+    pay-success-target: "&aИгрок {sender} перевёл вам {amount} DESCoin."
+    pay-not-enough: "&cНедостаточно DESCoin."
+
+npc-builder:
+  enabled: true
+  spawn-world: world
+  spawn-x: 0
+  spawn-y: 100
+  spawn-z: 0
+  interaction-radius: 6
+  names:
+    - "Равшан"
+    - "Джамшут"
+  command-phrases:
+    - "равшан, давай строим"
+    - "джамшут, приступай"
+    - "начальник сказал строить"
+    - "пацаны, строим"
+  comments:
+    - "{name}: Начальника, щас сделаем красиво, как в Москве!"
+    - "{name}: Ой-ой, блоков много, DESCoin давай побольше!"
+    - "{name}: Слышь, начальника, не мешай, мы профессионалы!"
+    - "{name}: Ща так построим, что деревня офигеет!"
+    - "{name}: Эээ, без мата не строится, но мы культурно стараемся!"
+    - "{name}: Начальника, бетон неси, щас район поднимем!"
+    - "{name}: Джамшут, уровень держи, тут криво нельзя!"
+    - "{name}: Равшан, блок подай, я фасад делаю!"
+    - "{name}: Начальника, это не халтура, это премиум стройка!"
+    - "{name}: Кто так строит? Мы так строим!"
+    - "{name}: Ща будет красиво, как элитный ЖК!"
+    - "{name}: Эй, цемент закончился? Не, это дизайнерская пауза!"
+  sounds:
+    start: BLOCK_ANVIL_USE
+    complete: UI_TOAST_CHALLENGE_COMPLETE
+    error: ENTITY_PUFFER_FISH_BLOW_OUT
+    coin: ENTITY_EXPERIENCE_ORB_PICKUP
+  workers:
+    dual-builders: true
+    step-radius: 4
+    place-blocks-per-step: 3
+
+  growth:
+    base-descoin: 25.0
+    block-cost-factor: 0.11
+    complexity-factor: 0.85
+    base-exp: 5
+    exp-block-factor: 0.03
+  default-zone:
+    size-x: 16
+    size-y: 16
+    size-z: 16
+  schematics:
+    hut:
+      display-name: "Маленькая хата"
+      type: schematic
+      block-count: 450
+      complexity: 1.2
+      size-x: 10
+      size-y: 8
+      size-z: 10
+      palette:
+        - COBBLESTONE
+        - OAK_PLANKS
+        - GLASS
+      resources:
+        COBBLESTONE: 300
+        OAK_PLANKS: 100
+        GLASS: 50
+    warehouse:
+      display-name: "Склад DE Squad"
+      type: litematic
+      block-count: 1800
+      complexity: 2.0
+      size-x: 20
+      size-y: 12
+      size-z: 20
+      palette:
+        - STONE_BRICKS
+        - SPRUCE_PLANKS
+        - GLASS
+        - LANTERN
+      resources:
+        STONE_BRICKS: 900
+        SPRUCE_PLANKS: 500
+        GLASS: 300
+        LANTERN: 24
+
+quests:
+  max-per-day: 3
+  reset-hour: 0
+  rewards:
+    easy: 40
+    medium: 90
+    hard: 180
+  pool:
+    easy:
+      - "Сломай 32 камня"
+      - "Собери 24 дубовых брёвен"
+      - "Поймай 6 рыб"
+    medium:
+      - "Убей 12 зомби"
+      - "Добудь 16 железной руды"
+      - "Приготовь 20 стейков"
+    hard:
+      - "Победи 2 эндерменов"
+      - "Добудь 24 золота"
+      - "Посети Незер и вернись"
+
+market:
+  fee-percent: 2.5
+  max-listings-per-player: 20
+  history-size: 100
+  gui-size: 54
+
+npc-craft:
+  enabled: true
+  one-time-per-player: true
+  recipe:
+    NETHER_STAR: 1
+    BEACON: 1
+    NETHERITE_INGOT: 4
+    TOTEM_OF_UNDYING: 1
+    ENCHANTED_GOLDEN_APPLE: 1
+
+messages:
+  gui-title-main: "&8NPC-Строитель"
+  gui-title-quests: "&8Мини-квесты DES"
+  gui-title-market: "&8Рынок игроков DES"
+  gui-title-schematics: "&8Выбор схематики"
+  gui-title-market-history: "&8История сделок"
+  npc-order-required: "&cПодойди ближе к NPC и отдай приказ в чат!"
+  npc-order-accepted: "&aПриказ принят. Открываю меню строительства..."
+  build-confirmed: "&aСтроительство запущено!"
+  build-cancelled: "&eСтроительство отменено."
+  insufficient-exp: "&cНедостаточно опыта для запуска стройки."
+  insufficient-resources: "&cНе хватает ресурсов для постройки."
+  insufficient-descoin: "&cНедостаточно DESCoin для постройки."
