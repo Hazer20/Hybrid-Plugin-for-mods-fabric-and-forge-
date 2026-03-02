@@ -26,6 +26,8 @@ public class HelpCommand implements CommandExecutor {
         sender.sendMessage("§e/desnpccraft §7- открыть крафт призыва NPC");
         sender.sendMessage("§e/desnpccraft admin reset <игрок> §7- сброс лимита крафта (OP)");
         sender.sendMessage("§e/desnpccraft admin give <игрок> §7- выдать спавнер NPC (OP)");
+        sender.sendMessage("§e/desschematic list §7- список схем из папки плагина");
+        sender.sendMessage("§e/desschematic addurl <имя> <url> §7- загрузить схему по ссылке");
         sender.sendMessage("§e/deshelp §7- это меню помощи");
         sender.sendMessage("§7Фразы для активации меню у NPC:");
 

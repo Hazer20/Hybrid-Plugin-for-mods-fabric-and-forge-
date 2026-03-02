@@ -20,6 +20,9 @@ commands:
   deshelp:
     description: Помощь по плагину
     usage: /deshelp
+  desschematic:
+    description: Управление внешними схемами
+    usage: /desschematic <list|addurl>
 permissions:
   descoin.admin:
     description: Админ-команды DESCoin
@@ -28,3 +31,7 @@ permissions:
   desnpccraft.admin:
     description: Админ-команды крафта/выдачи NPC
     default: op
+
+  desschematic.use:
+    description: Использование команды загрузки схем
+    default: true

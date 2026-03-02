@@ -5,6 +5,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.desquad.hybrid.command.DESCoinCommand;
 import ru.desquad.hybrid.command.MarketCommand;
 import ru.desquad.hybrid.command.QuestsCommand;
+import ru.desquad.hybrid.command.SchematicCommand;
 import ru.desquad.hybrid.command.NPCCraftCommand;
 import ru.desquad.hybrid.command.HelpCommand;
 import ru.desquad.hybrid.economy.EconomyManager;
@@ -21,6 +22,7 @@ import ru.desquad.hybrid.storage.DataStorage;
 import ru.desquad.hybrid.storage.SQLiteStorage;
 import ru.desquad.hybrid.storage.YamlStorage;
 import ru.desquad.hybrid.util.Message;
+import ru.desquad.hybrid.schematic.ExternalSchematicRepository;
 
 /**
  * Главный класс плагина.
@@ -36,6 +38,7 @@ public class DESHybridPlugin extends JavaPlugin {
     private MarketManager marketManager;
     private BuilderNPCManager builderNPCManager;
     private QuestStatusBoardService questStatusBoardService;
+    private ExternalSchematicRepository schematicRepository;
 
     @Override
     public void onEnable() {
@@ -50,10 +53,13 @@ public class DESHybridPlugin extends JavaPlugin {
         }
         dataStorage.init();
 
+        schematicRepository = new ExternalSchematicRepository(this);
+        schematicRepository.init();
+
         economyManager = new EconomyManager(this, dataStorage);
         questManager = new QuestManager(this, dataStorage, economyManager);
         marketManager = new MarketManager(this, dataStorage, economyManager);
-        builderNPCManager = new BuilderNPCManager(this, economyManager, dataStorage);
+        builderNPCManager = new BuilderNPCManager(this, economyManager, dataStorage, schematicRepository);
         questStatusBoardService = new QuestStatusBoardService(this, questManager);
 
         registerCommands();
@@ -91,6 +97,7 @@ public class DESHybridPlugin extends JavaPlugin {
         getCommand("desmarket").setExecutor(new MarketCommand(marketManager));
         getCommand("desnpccraft").setExecutor(new NPCCraftCommand(this, builderNPCManager));
         getCommand("deshelp").setExecutor(new HelpCommand(this));
+        getCommand("desschematic").setExecutor(new SchematicCommand(this, schematicRepository));
     }
 
     private void registerListeners() {
