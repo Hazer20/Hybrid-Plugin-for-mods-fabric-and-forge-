@@ -1,0 +1,33 @@
+name: HazerFishing
+main: com.hazer.hazefishing.HazerFishingPlugin
+version: 4.0 NFT EDITION
+author: Hazer_2_0
+api-version: '1.21'
+depend: [Vault]
+softdepend: [LuckPerms]
+commands:
+  fish:
+    description: Main fishing command
+    usage: /fish
+  hazefish:
+    description: Admin root command
+    aliases: [hfadmin]
+  hf:
+    description: Shortcut for admin/debug/test
+permissions:
+  hazefishing.admin:
+    default: op
+  hazefishing.test:
+    default: op
+  hazefishing.debug:
+    default: op
+  hazefishing.nft.manage:
+    default: op
+  hazefishing.boss.manage:
+    default: op
+  hazefishing.event.manage:
+    default: op
+  hazefishing.chance.modify:
+    default: op
+  hazefishing.simulate:
+    default: op
