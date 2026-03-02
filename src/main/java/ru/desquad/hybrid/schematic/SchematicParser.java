@@ -1,7 +1,6 @@
 package ru.desquad.hybrid.schematic;
 
-import net.querz.nbt.io.NBTUtil;
-import net.querz.nbt.tag.*;
+import net.kyori.adventure.nbt.*;
 import org.bukkit.Material;
 import ru.desquad.hybrid.npc.BuilderNPCManager;
 
@@ -12,11 +11,7 @@ import java.util.*;
 public class SchematicParser {
 
     public ParsedSchematic parse(Path file) throws IOException {
-        Tag<?> rootTag = NBTUtil.read(file.toFile());
-        if (!(rootTag instanceof CompoundTag root)) {
-            throw new IOException("Корневой NBT-тег не CompoundTag");
-        }
-
+        CompoundBinaryTag root = BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP);
         String n = file.getFileName().toString().toLowerCase(Locale.ROOT);
         if (n.endsWith(".litematic")) {
             return parseLitematic(root);
@@ -24,23 +19,20 @@ public class SchematicParser {
         return parseSchem(root);
     }
 
-    private ParsedSchematic parseSchem(CompoundTag root) throws IOException {
-        int width = getInt(root, "Width", 1);
-        int height = getInt(root, "Height", 1);
-        int length = getInt(root, "Length", 1);
+    private ParsedSchematic parseSchem(CompoundBinaryTag root) {
+        int width = root.getInt("Width", 1);
+        int height = root.getInt("Height", 1);
+        int length = root.getInt("Length", 1);
 
-        CompoundTag paletteTag = root.getCompoundTag("Palette");
-        if (paletteTag == null) throw new IOException("В .schem отсутствует Palette");
-
+        CompoundBinaryTag paletteTag = root.getCompound("Palette");
         Map<Integer, Material> palette = new HashMap<>();
         for (String key : paletteTag.keySet()) {
-            int id = getInt(paletteTag, key, -1);
+            int id = paletteTag.getInt(key);
             Material m = toMaterial(key);
-            if (id >= 0 && m != null) palette.put(id, m);
+            if (m != null) palette.put(id, m);
         }
 
         byte[] dataBytes = root.getByteArray("BlockData");
-        if (dataBytes == null) throw new IOException("В .schem отсутствует BlockData");
         List<Integer> paletteIds = decodeVarInts(dataBytes);
 
         List<BuilderNPCManager.PlannedBlock> plan = new ArrayList<>();
@@ -59,37 +51,24 @@ public class SchematicParser {
         return new ParsedSchematic(width, height, length, plan);
     }
 
-    private ParsedSchematic parseLitematic(CompoundTag root) throws IOException {
-        CompoundTag regions = root.getCompoundTag("Regions");
-        if (regions == null || regions.size() == 0) throw new IOException("В .litematic отсутствуют Regions");
+    private ParsedSchematic parseLitematic(CompoundBinaryTag root) {
+        CompoundBinaryTag regions = root.getCompound("Regions");
+        String firstRegion = regions.keySet().stream().findFirst().orElseThrow(() -> new IllegalArgumentException("Нет Regions"));
+        CompoundBinaryTag region = regions.getCompound(firstRegion);
 
-        String firstRegion = regions.keySet().iterator().next();
-        CompoundTag region = regions.getCompoundTag(firstRegion);
-        if (region == null) throw new IOException("Region не найден");
+        CompoundBinaryTag size = region.getCompound("Size");
+        int width = Math.abs(size.getInt("x", 1));
+        int height = Math.abs(size.getInt("y", 1));
+        int length = Math.abs(size.getInt("z", 1));
 
-        CompoundTag size = region.getCompoundTag("Size");
-        if (size == null) throw new IOException("В region отсутствует Size");
-
-        int width = Math.abs(getInt(size, "x", 1));
-        int height = Math.abs(getInt(size, "y", 1));
-        int length = Math.abs(getInt(size, "z", 1));
-
-        ListTag<?> paletteListRaw = region.getListTag("BlockStatePalette");
-        if (!(paletteListRaw instanceof ListTag<?> paletteList) || paletteList.size() == 0) {
-            throw new IOException("В .litematic отсутствует BlockStatePalette");
-        }
-
+        ListBinaryTag paletteList = region.getList("BlockStatePalette", BinaryTagTypes.COMPOUND);
         List<Material> palette = new ArrayList<>();
-        for (Tag<?> tag : paletteList) {
-            if (tag instanceof CompoundTag st) {
-                String name = st.getString("Name");
-                palette.add(toMaterial(name));
-            }
+        for (BinaryTag tag : paletteList) {
+            CompoundBinaryTag st = (CompoundBinaryTag) tag;
+            palette.add(toMaterial(st.getString("Name", "minecraft:air")));
         }
 
         long[] states = region.getLongArray("BlockStates");
-        if (states == null || states.length == 0) throw new IOException("В .litematic отсутствует BlockStates");
-
         int total = width * height * length;
         int bits = Math.max(2, 32 - Integer.numberOfLeadingZeros(Math.max(1, palette.size() - 1)));
         long mask = (1L << bits) - 1L;
@@ -100,13 +79,11 @@ public class SchematicParser {
             int longIndex = bitIndex >>> 6;
             int startBit = bitIndex & 63;
             if (longIndex >= states.length) break;
-
             long value = (states[longIndex] >>> startBit);
             int endBits = startBit + bits;
             if (endBits > 64 && longIndex + 1 < states.length) {
                 value |= (states[longIndex + 1] << (64 - startBit));
             }
-
             int paletteIndex = (int) (value & mask);
             Material m = paletteIndex >= 0 && paletteIndex < palette.size() ? palette.get(paletteIndex) : Material.AIR;
             if (m == null || m == Material.AIR) continue;
@@ -145,11 +122,6 @@ public class SchematicParser {
         } catch (IllegalArgumentException e) {
             return Material.AIR;
         }
-    }
-
-    private int getInt(CompoundTag tag, String key, int def) {
-        NumberTag<?> n = tag.getNumberTag(key);
-        return n != null ? n.asInt() : def;
     }
 
     public record ParsedSchematic(int width, int height, int length, List<BuilderNPCManager.PlannedBlock> plan) {}
