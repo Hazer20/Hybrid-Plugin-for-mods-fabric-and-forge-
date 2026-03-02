@@ -1,0 +1,14 @@
+name: BookImage
+version: 1.0.0
+main: com.hazer.bookimage.BookImagePlugin
+api-version: '1.21'
+author: Hazer_2_0
+description: Вставка изображений по URL в книги Minecraft.
+commands:
+  bookimage:
+    description: Конвертация URL в книге и создание готовой книги с картинкой.
+    usage: /bookimage [create <url>]
+    permission: bookimage.use
+permissions:
+  bookimage.use:
+    default: true
