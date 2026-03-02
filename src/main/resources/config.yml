@@ -1,0 +1,12 @@
+radio:
+  transmit-radius: 3
+  receive-radius: 16
+  delay-ms: 300
+  distortion: true
+  max-channel-range: 256
+  cooldown-ms: 600
+
+disc:
+  max-size-mb: 10
+  max-duration-sec: 300
+  storage-path: discs/
