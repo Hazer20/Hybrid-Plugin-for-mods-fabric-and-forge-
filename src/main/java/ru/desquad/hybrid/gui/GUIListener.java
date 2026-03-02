@@ -37,6 +37,10 @@ public class GUIListener implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         String title = PLAIN.serialize(event.getView().title());
+        if (event.getClickedInventory() == null || !event.getClickedInventory().equals(event.getView().getTopInventory())) {
+            return;
+        }
+
 
         if (title.contains("NPC-Строитель")) {
             event.setCancelled(true);
@@ -170,7 +174,9 @@ public class GUIListener implements Listener {
             player.openInventory(GUIFactory.createMainNPCGUI(plugin, player, npcManager));
             return;
         }
-        String key = PLAIN.serialize(item.getItemMeta().displayName());
+        if (item.getItemMeta() == null || item.getItemMeta().displayName() == null) return;
+        String key = PLAIN.serialize(item.getItemMeta().displayName()).trim();
+        if (key.isEmpty()) return;
         npcManager.selectSchematic(player, key);
         player.sendMessage("§aСхематика выбрана: §f" + key);
         player.openInventory(GUIFactory.createMainNPCGUI(plugin, player, npcManager));

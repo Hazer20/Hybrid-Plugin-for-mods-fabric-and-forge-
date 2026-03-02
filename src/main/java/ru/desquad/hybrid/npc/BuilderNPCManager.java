@@ -102,6 +102,11 @@ public class BuilderNPCManager {
     public BuildQuote quote(Player player) {
         String key = getSelectedSchematic(player);
         if (key == null) return null;
+        return quoteForKey(player, key);
+    }
+
+    public BuildQuote quoteForKey(Player player, String key) {
+        if (key == null) return null;
 
         boolean external = schematicRepository.isExternalKey(key);
         ConfigurationSection sec = external ? null : plugin.getConfig().getConfigurationSection("npc-builder.schematics." + key);
