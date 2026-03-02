@@ -1,0 +1,20 @@
+name: DESHybridPlugin
+version: 1.0.0
+main: ru.desquad.hybrid.DESHybridPlugin
+api-version: '1.21'
+author: Hazer_2_0
+description: Полная система экономики DESCoin, NPC-строителя, квестов и рынка
+commands:
+  descoin:
+    description: Управление валютой DESCoin
+    usage: /descoin <give|balance|pay>
+  desquests:
+    description: Открыть меню мини-квестов
+    usage: /desquests
+  desmarket:
+    description: Открыть рынок игроков
+    usage: /desmarket
+permissions:
+  descoin.admin:
+    description: Админ-команды DESCoin
+    default: op
