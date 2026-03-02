@@ -1,8 +1,8 @@
 package com.hazer2_0.radio;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,12 +14,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RadioManager {
     private final JavaPlugin plugin;
-    private final NoteBlockRegistry registry = new NoteBlockRegistry();
+    private final NoteBlockRegistry registry;
     private final LeverDetector leverDetector = new LeverDetector();
+    private final PlacedRadioRegistry placedRadioRegistry;
     private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
 
-    public RadioManager(JavaPlugin plugin) {
+    public RadioManager(JavaPlugin plugin, PlacedRadioRegistry placedRadioRegistry) {
         this.plugin = plugin;
+        this.placedRadioRegistry = placedRadioRegistry;
+        this.registry = new NoteBlockRegistry(placedRadioRegistry);
     }
 
     public RadioChannel getActiveChannel(Player player) {
@@ -32,8 +35,8 @@ public class RadioManager {
             for (int y = -transmitRadius; y <= transmitRadius; y++) {
                 for (int z = -transmitRadius; z <= transmitRadius; z++) {
                     Location target = loc.clone().add(x, y, z);
-                    if (!(target.getBlock().getBlockData() instanceof NoteBlock)) continue;
-                    String name = ChannelNameResolver.resolve(target.getBlock().getState());
+                    if (target.getBlock().getType() != Material.NOTE_BLOCK) continue;
+                    String name = placedRadioRegistry.getChannel(target);
                     if (name == null || name.isBlank()) continue;
                     if (!leverDetector.isLeverPoweredNearby(target)) continue;
                     List<Location> network = registry.findByName(world, name, range, target);

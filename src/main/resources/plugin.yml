@@ -8,6 +8,9 @@ commands:
   disc:
     description: Create and manage custom discs
     usage: /disc create <url> <name>
+  radio:
+    description: Выдать рацию (нотный блок)
+    usage: /radio give <канал>
 permissions:
   hazer.radio.use:
     default: true
