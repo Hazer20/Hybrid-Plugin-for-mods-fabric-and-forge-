@@ -24,3 +24,7 @@ permissions:
   descoin.admin:
     description: Админ-команды DESCoin
     default: op
+
+  desnpccraft.admin:
+    description: Админ-команды крафта/выдачи NPC
+    default: op

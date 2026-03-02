@@ -90,7 +90,7 @@ public class DESHybridPlugin extends JavaPlugin {
         getCommand("desquests").setExecutor(new QuestsCommand(questManager));
         getCommand("desmarket").setExecutor(new MarketCommand(marketManager));
         getCommand("desnpccraft").setExecutor(new NPCCraftCommand(this, builderNPCManager));
-        getCommand("deshelp").setExecutor(new HelpCommand());
+        getCommand("deshelp").setExecutor(new HelpCommand(this));
     }
 
     private void registerListeners() {
