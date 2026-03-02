@@ -3,8 +3,7 @@ main: com.hazer.hazefishing.HazerFishingPlugin
 version: 4.0 NFT EDITION
 author: Hazer_2_0
 api-version: '1.21'
-depend: [Vault]
-softdepend: [LuckPerms]
+softdepend: [Vault, LuckPerms]
 commands:
   fish:
     description: Main fishing command
