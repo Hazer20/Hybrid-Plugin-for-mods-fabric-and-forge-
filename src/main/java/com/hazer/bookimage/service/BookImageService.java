@@ -124,8 +124,8 @@ public class BookImageService {
                         return;
                     }
 
-                    meta.author("Hazer_2_0");
-                    meta.title("Image Book");
+                    meta.author(Component.text("Hazer_2_0"));
+                    meta.title(Component.text("Image Book"));
                     meta.pages(List.of(rendered));
                     writtenBook.setItemMeta(meta);
 
