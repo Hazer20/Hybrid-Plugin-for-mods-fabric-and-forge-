@@ -1,0 +1,7 @@
+prefix: "&8[&dHazerFishing&8] "
+no-permission: "&cУ вас нет прав."
+rod-minted: "&aВы создали NFT-удочку {serial}!"
+nft-catch-global: "&d⚡ {player} СОЗДАЛ ЛЕГЕНДУ — NFT РЫБА №{id} весом {weight}г!"
+auction-created: "&eЛот создан за {price}."
+debug-enabled: "&aDebug включён"
+debug-disabled: "&cDebug выключен"

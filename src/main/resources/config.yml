@@ -1,0 +1,38 @@
+plugin:
+  name: HazerFishing
+  author: Hazer_2_0
+  version: 4.0 NFT EDITION
+
+database:
+  mode: sqlite
+  mysql:
+    url: jdbc:mysql://localhost:3306/hazefishing
+    username: root
+    password: change_me
+
+discord:
+  webhook: ""
+
+nft:
+  minting-limit: 50000
+  season-drop: "S1"
+  soulbound-default: true
+  base-price: 1000000
+
+rarity-chances:
+  COMMON: 60.0
+  UNCOMMON: 24.0
+  RARE: 10.0
+  EPIC: 4.0
+  LEGENDARY: 1.0
+  MYTHIC: 0.5
+  GODLIKE: 0.2
+  DIVINE: 0.1
+  CELESTIAL: 0.05
+  VOID: 0.01
+  NFT: 0.0001
+
+performance:
+  async-animation: true
+  update-ticks: 2
+  debug-sampler-ticks: 100
