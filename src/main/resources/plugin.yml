@@ -17,6 +17,9 @@ commands:
   desnpccraft:
     description: Открыть интерфейс крафта NPC
     usage: /desnpccraft
+  deshelp:
+    description: Помощь по плагину
+    usage: /deshelp
 permissions:
   descoin.admin:
     description: Админ-команды DESCoin

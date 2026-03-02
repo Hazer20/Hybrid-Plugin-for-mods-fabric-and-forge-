@@ -3,15 +3,17 @@ package ru.desquad.hybrid.npc;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.desquad.hybrid.DESHybridPlugin;
 import ru.desquad.hybrid.economy.EconomyManager;
-import ru.desquad.hybrid.storage.DataStorage;
 import ru.desquad.hybrid.gui.GUIFactory;
+import ru.desquad.hybrid.storage.DataStorage;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +35,6 @@ public class BuilderNPCManager {
         this.economy = economy;
         this.storage = storage;
     }
-
 
     public boolean hasCraftedNpcToken(UUID uuid) {
         return storage.hasCraftedNpcToken(uuid);
@@ -62,29 +63,14 @@ public class BuilderNPCManager {
             plugin.getLogger().warning("Мир для NPC не найден.");
             return;
         }
-
-        if (npc != null && !npc.isDead()) {
-            npc.remove();
-        }
-
-        Location loc = new Location(world,
+        spawnNpcAt(new Location(world,
                 plugin.getConfig().getDouble("npc-builder.spawn-x"),
                 plugin.getConfig().getDouble("npc-builder.spawn-y"),
-                plugin.getConfig().getDouble("npc-builder.spawn-z"));
-
-        npcName = randomName();
-        npc = (Villager) world.spawnEntity(loc, EntityType.VILLAGER);
-        npc.customName(Component.text("§6" + npcName + " §7[Строитель]"));
-        npc.setCustomNameVisible(true);
-        npc.setAI(false);
-        npc.setInvulnerable(true);
-        npc.setProfession(Villager.Profession.TOOLSMITH);
+                plugin.getConfig().getDouble("npc-builder.spawn-z")));
     }
 
     public void cleanup() {
-        if (npc != null && !npc.isDead()) {
-            npc.remove();
-        }
+        if (npc != null && !npc.isDead()) npc.remove();
     }
 
     public boolean isNearNPC(Player player) {
@@ -108,11 +94,6 @@ public class BuilderNPCManager {
         orderedPlayers.put(player.getUniqueId(), System.currentTimeMillis());
         player.sendMessage(colorMsg("messages.npc-order-accepted"));
         player.openInventory(GUIFactory.createMainNPCGUI(plugin, player, this));
-    }
-
-    public boolean canOpenBuildGui(Player player) {
-        Long ts = orderedPlayers.get(player.getUniqueId());
-        return ts != null && System.currentTimeMillis() - ts < 60_000;
     }
 
     public List<String> getAvailableSchematics() {
@@ -147,20 +128,24 @@ public class BuilderNPCManager {
         int exp = (int) Math.ceil(baseExp + blocks * expFactor + complexity * 5);
 
         Location npcLoc = npc != null ? npc.getLocation() : player.getLocation();
-        int sx = plugin.getConfig().getInt("npc-builder.default-zone.size-x", 16);
-        int sy = plugin.getConfig().getInt("npc-builder.default-zone.size-y", 16);
-        int sz = plugin.getConfig().getInt("npc-builder.default-zone.size-z", 16);
+        int sx = sec.getInt("size-x", plugin.getConfig().getInt("npc-builder.default-zone.size-x", 16));
+        int sy = sec.getInt("size-y", plugin.getConfig().getInt("npc-builder.default-zone.size-y", 16));
+        int sz = sec.getInt("size-z", plugin.getConfig().getInt("npc-builder.default-zone.size-z", 16));
 
         Map<String, Integer> resources = new LinkedHashMap<>();
         ConfigurationSection rSec = sec.getConfigurationSection("resources");
         if (rSec != null) {
-            for (String mat : rSec.getKeys(false)) {
-                resources.put(mat, rSec.getInt(mat));
-            }
+            for (String mat : rSec.getKeys(false)) resources.put(mat, rSec.getInt(mat));
         }
 
-        return new BuildQuote(key, sec.getString("display-name", key), descoin, exp, resources,
-                npcLoc.getBlockX() + 2, npcLoc.getBlockY(), npcLoc.getBlockZ() + 2, sx, sy, sz);
+        List<Material> palette = new ArrayList<>();
+        for (String s : sec.getStringList("palette")) {
+            try { palette.add(Material.valueOf(s)); } catch (IllegalArgumentException ignored) {}
+        }
+        if (palette.isEmpty()) palette.add(Material.STONE);
+
+        return new BuildQuote(key, sec.getString("display-name", key), sec.getString("type", "schematic"), descoin, exp,
+                resources, palette, npcLoc.getBlockX() + 2, npcLoc.getBlockY(), npcLoc.getBlockZ() + 2, sx, sy, sz, blocks);
     }
 
     public void startBuild(Player player, BuildQuote quote) {
@@ -175,31 +160,91 @@ public class BuilderNPCManager {
             playConfigSound(player, "npc-builder.sounds.error");
             return;
         }
+
         player.setLevel(Math.max(0, player.getLevel() - quote.expLevels()));
         playConfigSound(player, "npc-builder.sounds.start");
 
         BossBar bar = BossBar.bossBar(Component.text("§6Строительство: 0%"), 0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
         player.showBossBar(bar);
 
+        List<Villager> workers = spawnWorkers(quote);
+        int targetBlocks = quote.blockCount();
+        int placePerStep = Math.max(1, plugin.getConfig().getInt("npc-builder.workers.place-blocks-per-step", 3));
+
         new BukkitRunnable() {
-            int step = 0;
+            int placed = 0;
+
             @Override
             public void run() {
-                step++;
-                float progress = Math.min(1f, step / 20f);
-                bar.progress(progress);
-                bar.name(Component.text("§6Строительство: " + (int) (progress * 100) + "%"));
-                if (step % 4 == 0) {
-                    npcComment(player);
+                int stepPlaced = 0;
+                while (stepPlaced < placePerStep && placed < targetBlocks) {
+                    placeRandomBlock(quote);
+                    stepPlaced++;
+                    placed++;
                 }
+
+                moveWorkers(workers, quote);
+                float progress = Math.min(1f, placed / (float) targetBlocks);
+                bar.progress(progress);
+                bar.name(Component.text("§6Строительство: " + (int) (progress * 100) + "% | " + quote.displayName()));
+
+                if (placed % Math.max(20, targetBlocks / 8) == 0) npcComment(player);
+
                 if (progress >= 1f) {
                     cancel();
+                    workers.forEach(Entity::remove);
                     player.hideBossBar(bar);
-                    player.sendMessage(colorMsg("messages.build-confirmed"));
+                    player.sendMessage(colorMsg("messages.build-confirmed") + " §7(" + quote.displayName() + ")");
                     playConfigSound(player, "npc-builder.sounds.complete");
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 10L);
+    }
+
+    private List<Villager> spawnWorkers(BuildQuote quote) {
+        List<Villager> workers = new ArrayList<>();
+        if (npc != null && !npc.isDead()) workers.add(npc);
+        boolean dual = plugin.getConfig().getBoolean("npc-builder.workers.dual-builders", true);
+        if (dual && npc != null && !npc.isDead()) {
+            Location secondLoc = npc.getLocation().clone().add(1.5, 0, 0);
+            Villager second = (Villager) npc.getWorld().spawnEntity(secondLoc, EntityType.VILLAGER);
+            second.customName(Component.text("§6" + ("Равшан".equals(npcName) ? "Джамшут" : "Равшан") + " §7[Помощник]"));
+            second.setCustomNameVisible(true);
+            second.setInvulnerable(true);
+            second.setAI(false);
+            workers.add(second);
+        }
+        return workers;
+    }
+
+    private void moveWorkers(List<Villager> workers, BuildQuote quote) {
+        int radius = plugin.getConfig().getInt("npc-builder.workers.step-radius", 4);
+        for (Villager worker : workers) {
+            if (worker == null || worker.isDead()) continue;
+            Location base = new Location(worker.getWorld(), quote.x(), quote.y(), quote.z());
+            double dx = random.nextInt(radius * 2 + 1) - radius;
+            double dz = random.nextInt(radius * 2 + 1) - radius;
+            Location target = base.clone().add(dx, 0, dz);
+            target.setY(target.getWorld().getHighestBlockYAt(target) + 1);
+            worker.teleport(target);
+            worker.getWorld().spawnParticle(Particle.CLOUD, target, 4, 0.2, 0.2, 0.2, 0.01);
+        }
+    }
+
+    private void placeRandomBlock(BuildQuote quote) {
+        World world = npc != null ? npc.getWorld() : Bukkit.getWorld(plugin.getConfig().getString("npc-builder.spawn-world", "world"));
+        if (world == null) return;
+
+        int x = quote.x() + random.nextInt(Math.max(1, quote.sizeX()));
+        int y = quote.y() + random.nextInt(Math.max(1, quote.sizeY()));
+        int z = quote.z() + random.nextInt(Math.max(1, quote.sizeZ()));
+        Material material = quote.palette().get(random.nextInt(quote.palette().size()));
+        Block block = world.getBlockAt(x, y, z);
+
+        if (block.getType().isAir() || block.isPassable()) {
+            block.setType(material, false);
+            world.playSound(block.getLocation(), Sound.BLOCK_STONE_PLACE, 0.5f, 1.2f);
+        }
     }
 
     public void npcComment(Player player) {
@@ -211,10 +256,6 @@ public class BuilderNPCManager {
 
     public Villager getNpc() {
         return npc;
-    }
-
-    public String getNpcName() {
-        return npcName;
     }
 
     private String randomName() {
@@ -235,6 +276,7 @@ public class BuilderNPCManager {
         }
     }
 
-    public record BuildQuote(String key, String displayName, double descoin, int expLevels,
-                             Map<String, Integer> resources, int x, int y, int z, int sizeX, int sizeY, int sizeZ) {}
+    public record BuildQuote(String key, String displayName, String formatType, double descoin, int expLevels,
+                             Map<String, Integer> resources, List<Material> palette,
+                             int x, int y, int z, int sizeX, int sizeY, int sizeZ, int blockCount) {}
 }

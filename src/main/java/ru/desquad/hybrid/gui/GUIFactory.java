@@ -48,15 +48,21 @@ public class GUIFactory {
 
     public static Inventory createSchematicGUI(DESHybridPlugin plugin, Player player, BuilderNPCManager npc) {
         Inventory inv = Bukkit.createInventory(player, 54, color(plugin.getConfig().getString("messages.gui-title-schematics", "Схемы")));
+        String previous = npc.getSelectedSchematic(player);
         int slot = 10;
         for (String key : npc.getAvailableSchematics()) {
+            npc.selectSchematic(player, key);
             BuilderNPCManager.BuildQuote quote = npc.quote(player);
+            String format = quote != null ? quote.formatType() : "schematic";
+            String size = quote != null ? (quote.sizeX() + "x" + quote.sizeY() + "x" + quote.sizeZ()) : "?";
+            String blocks = quote != null ? String.valueOf(quote.blockCount()) : "?";
             inv.setItem(slot++, new ItemBuilder(Material.STRUCTURE_BLOCK)
                     .name("&6" + key)
-                    .lore(List.of("&7Нажми, чтобы выбрать схему", "&8Форматы: litematic/schematic"))
+                    .lore(List.of("&7Нажми, чтобы выбрать схему", "&7Формат: &f" + format, "&7Размер: &f" + size, "&7Блоков: &f" + blocks))
                     .build());
             if (slot >= 44) break;
         }
+        if (previous != null) npc.selectSchematic(player, previous);
         inv.setItem(49, new ItemBuilder(Material.ARROW).name("&eНазад").build());
         return inv;
     }

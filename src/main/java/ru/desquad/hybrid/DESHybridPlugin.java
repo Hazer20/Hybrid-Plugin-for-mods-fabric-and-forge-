@@ -6,6 +6,7 @@ import ru.desquad.hybrid.command.DESCoinCommand;
 import ru.desquad.hybrid.command.MarketCommand;
 import ru.desquad.hybrid.command.QuestsCommand;
 import ru.desquad.hybrid.command.NPCCraftCommand;
+import ru.desquad.hybrid.command.HelpCommand;
 import ru.desquad.hybrid.economy.EconomyManager;
 import ru.desquad.hybrid.gui.GUIListener;
 import ru.desquad.hybrid.market.MarketManager;
@@ -82,6 +83,7 @@ public class DESHybridPlugin extends JavaPlugin {
         getCommand("desquests").setExecutor(new QuestsCommand(questManager));
         getCommand("desmarket").setExecutor(new MarketCommand(marketManager));
         getCommand("desnpccraft").setExecutor(new NPCCraftCommand(this, builderNPCManager));
+        getCommand("deshelp").setExecutor(new HelpCommand());
     }
 
     private void registerListeners() {
