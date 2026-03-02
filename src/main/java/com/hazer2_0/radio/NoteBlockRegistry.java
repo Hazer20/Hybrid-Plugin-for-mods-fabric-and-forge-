@@ -3,7 +3,6 @@ package com.hazer2_0.radio;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.TileState;
 import org.bukkit.block.data.type.NoteBlock;
 
 import java.util.ArrayList;
@@ -25,10 +24,7 @@ public class NoteBlockRegistry {
                     if (!(block.getBlockData() instanceof NoteBlock)) {
                         continue;
                     }
-                    if (!(block.getState() instanceof TileState tileState)) {
-                        continue;
-                    }
-                    String customName = tileState.getCustomName();
+                    String customName = ChannelNameResolver.resolve(block.getState());
                     if (customName != null && customName.equalsIgnoreCase(channelName)) {
                         result.add(block.getLocation().add(0.5, 0.5, 0.5));
                     }

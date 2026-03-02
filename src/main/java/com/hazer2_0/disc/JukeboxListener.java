@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class JukeboxListener implements Listener {
@@ -35,7 +36,7 @@ public class JukeboxListener implements Listener {
 
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
-        event.getChunk().getTileEntities(false).stream()
+        Arrays.stream(event.getChunk().getTileEntities(false))
                 .filter(state -> state.getType() == Material.JUKEBOX)
                 .forEach(state -> playbackManager.stop(UUID.nameUUIDFromBytes(state.getLocation().toString().getBytes())));
     }

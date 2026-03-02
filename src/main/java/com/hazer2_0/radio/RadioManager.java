@@ -2,7 +2,6 @@ package com.hazer2_0.radio;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.block.TileState;
 import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,8 +33,7 @@ public class RadioManager {
                 for (int z = -transmitRadius; z <= transmitRadius; z++) {
                     Location target = loc.clone().add(x, y, z);
                     if (!(target.getBlock().getBlockData() instanceof NoteBlock)) continue;
-                    if (!(target.getBlock().getState() instanceof TileState tileState)) continue;
-                    String name = tileState.getCustomName();
+                    String name = ChannelNameResolver.resolve(target.getBlock().getState());
                     if (name == null || name.isBlank()) continue;
                     if (!leverDetector.isLeverPoweredNearby(target)) continue;
                     List<Location> network = registry.findByName(world, name, range, target);
