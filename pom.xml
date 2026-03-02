@@ -21,10 +21,6 @@
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
-        <repository>
-            <id>maxhenkel</id>
-            <url>https://maven.maxhenkel.de/repository/public</url>
-        </repository>
     </repositories>
 
     <dependencies>
@@ -32,12 +28,6 @@
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
             <version>1.21.8-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.maxhenkel.voicechat</groupId>
-            <artifactId>voicechat-api</artifactId>
-            <version>2.5.29</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
