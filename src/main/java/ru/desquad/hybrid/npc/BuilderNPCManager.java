@@ -13,6 +13,7 @@ import ru.desquad.hybrid.DESHybridPlugin;
 import ru.desquad.hybrid.economy.EconomyManager;
 import ru.desquad.hybrid.gui.GUIFactory;
 import ru.desquad.hybrid.schematic.ExternalSchematicRepository;
+import ru.desquad.hybrid.schematic.SchematicParser;
 import ru.desquad.hybrid.storage.DataStorage;
 
 import java.util.*;
@@ -24,6 +25,7 @@ public class BuilderNPCManager {
     private final EconomyManager economy;
     private final DataStorage storage;
     private final ExternalSchematicRepository schematicRepository;
+    private final SchematicParser schematicParser = new SchematicParser();
 
     private final Random random = new Random();
     private final Map<UUID, Long> orderedPlayers = new ConcurrentHashMap<>();
@@ -105,15 +107,51 @@ public class BuilderNPCManager {
         ConfigurationSection sec = external ? null : plugin.getConfig().getConfigurationSection("npc-builder.schematics." + key);
         if (!external && sec == null) return null;
 
-        int sx = external ? plugin.getConfig().getInt("npc-builder.default-zone.size-x", 16) : sec.getInt("size-x", plugin.getConfig().getInt("npc-builder.default-zone.size-x", 16));
-        int sy = external ? plugin.getConfig().getInt("npc-builder.default-zone.size-y", 16) : sec.getInt("size-y", plugin.getConfig().getInt("npc-builder.default-zone.size-y", 16));
-        int sz = external ? plugin.getConfig().getInt("npc-builder.default-zone.size-z", 16) : sec.getInt("size-z", plugin.getConfig().getInt("npc-builder.default-zone.size-z", 16));
+        int sx;
+        int sy;
+        int sz;
+        List<Material> palette;
+        List<PlannedBlock> plan;
+        String displayName;
+        String formatType;
+        double complexity;
+        Map<String, Integer> resources = new LinkedHashMap<>();
 
-        List<Material> palette = parsePalette(sec, external);
-        List<PlannedBlock> plan = parseOrGeneratePlan(sec, sx, sy, sz, palette);
+        if (external) {
+            var p = schematicRepository.resolveByKey(key).orElse(null);
+            if (p == null) return null;
+            try {
+                SchematicParser.ParsedSchematic parsed = schematicParser.parse(p);
+                sx = parsed.width();
+                sy = parsed.height();
+                sz = parsed.length();
+                plan = parsed.plan();
+                palette = new ArrayList<>();
+                for (PlannedBlock pb : plan) if (!palette.contains(pb.material())) palette.add(pb.material());
+                displayName = key.substring(4);
+                String file = p.getFileName().toString().toLowerCase(Locale.ROOT);
+                formatType = file.endsWith(".litematic") ? "litematic" : (file.endsWith(".schem") ? "schem" : "schematic");
+                complexity = 1.0;
+            } catch (Exception e) {
+                plugin.getLogger().warning("Ошибка парсинга схемы " + key + ": " + e.getMessage());
+                return null;
+            }
+        } else {
+            sx = sec.getInt("size-x", plugin.getConfig().getInt("npc-builder.default-zone.size-x", 16));
+            sy = sec.getInt("size-y", plugin.getConfig().getInt("npc-builder.default-zone.size-y", 16));
+            sz = sec.getInt("size-z", plugin.getConfig().getInt("npc-builder.default-zone.size-z", 16));
+            palette = parsePalette(sec, false);
+            plan = parseOrGeneratePlan(sec, sx, sy, sz, palette);
+            displayName = sec.getString("display-name", key);
+            formatType = sec.getString("type", "schematic");
+            complexity = sec.getDouble("complexity", 1.0);
+            if (sec.getConfigurationSection("resources") != null) {
+                ConfigurationSection rSec = sec.getConfigurationSection("resources");
+                for (String mat : rSec.getKeys(false)) resources.put(mat, rSec.getInt(mat));
+            }
+        }
+
         int blocks = plan.size();
-
-        double complexity = external ? 1.0 : sec.getDouble("complexity", 1.0);
         double base = plugin.getConfig().getDouble("npc-builder.growth.base-descoin", 25);
         double blockFactor = plugin.getConfig().getDouble("npc-builder.growth.block-cost-factor", 0.1);
         double complexityFactor = plugin.getConfig().getDouble("npc-builder.growth.complexity-factor", 0.8);
@@ -123,14 +161,6 @@ public class BuilderNPCManager {
         int exp = (int) Math.ceil(baseExp + blocks * expFactor + complexity * 5);
 
         Location npcLoc = npc != null ? npc.getLocation() : player.getLocation();
-        Map<String, Integer> resources = new LinkedHashMap<>();
-        if (!external && sec != null && sec.getConfigurationSection("resources") != null) {
-            ConfigurationSection rSec = sec.getConfigurationSection("resources");
-            for (String mat : rSec.getKeys(false)) resources.put(mat, rSec.getInt(mat));
-        }
-
-        String displayName = external ? key.substring(4) : sec.getString("display-name", key);
-        String formatType = external ? (key.endsWith("litematic") ? "litematic" : "schematic") : sec.getString("type", "schematic");
 
         return new BuildQuote(key, displayName, formatType, descoin, exp, resources,
                 npcLoc.getBlockX() + 2, npcLoc.getBlockY(), npcLoc.getBlockZ() + 2, sx, sy, sz, blocks, plan);

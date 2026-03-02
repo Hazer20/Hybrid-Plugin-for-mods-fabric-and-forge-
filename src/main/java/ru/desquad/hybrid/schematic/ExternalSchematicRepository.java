@@ -38,7 +38,7 @@ public class ExternalSchematicRepository {
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir)) {
             for (Path p : ds) {
                 String name = p.getFileName().toString();
-                if (name.endsWith(".schematic") || name.endsWith(".litematic")) {
+                if (name.endsWith(".schem") || name.endsWith(".schematic") || name.endsWith(".litematic")) {
                     keys.add("ext:" + stripExt(name));
                 }
             }
@@ -55,8 +55,10 @@ public class ExternalSchematicRepository {
     public Optional<Path> resolveByKey(String key) {
         if (!isExternalKey(key)) return Optional.empty();
         String base = key.substring(4);
+        Path a0 = dir.resolve(base + ".schem");
         Path a = dir.resolve(base + ".schematic");
         Path b = dir.resolve(base + ".litematic");
+        if (Files.exists(a0)) return Optional.of(a0);
         if (Files.exists(a)) return Optional.of(a);
         if (Files.exists(b)) return Optional.of(b);
         return Optional.empty();
@@ -64,11 +66,11 @@ public class ExternalSchematicRepository {
 
     public void downloadFromUrl(String name, String url) throws Exception {
         String low = url.toLowerCase(Locale.ROOT);
-        if (!(low.endsWith(".schematic") || low.endsWith(".litematic"))) {
-            throw new IllegalArgumentException("URL должен заканчиваться на .schematic или .litematic");
+        if (!(low.endsWith(".schem") || low.endsWith(".schematic") || low.endsWith(".litematic"))) {
+            throw new IllegalArgumentException("URL должен заканчиваться на .schem/.schematic/.litematic");
         }
 
-        String ext = low.endsWith(".litematic") ? ".litematic" : ".schematic";
+        String ext = low.endsWith(".litematic") ? ".litematic" : (low.endsWith(".schem") ? ".schem" : ".schematic");
         String safe = name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_\\-]", "_");
         Path target = dir.resolve(safe + ext);
 

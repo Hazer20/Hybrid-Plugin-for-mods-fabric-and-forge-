@@ -26,7 +26,7 @@ public class SchematicCommand implements CommandExecutor {
 
         if (args.length == 0) {
             sender.sendMessage("§e/desschematic list");
-            sender.sendMessage("§e/desschematic addurl <имя> <url_до_.schematic/.litematic>");
+            sender.sendMessage("§e/desschematic addurl <имя> <url_до_.schem/.schematic/.litematic>");
             sender.sendMessage("§eПапка схем: " + repo.getDir());
             return true;
         }
