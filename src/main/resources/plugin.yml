@@ -1,0 +1,19 @@
+name: Hazer_2_0
+version: 1.0.0
+main: com.hazer2_0.HazerPlugin
+api-version: '1.21'
+authors: [ Codex ]
+softdepend: [ voicechat ]
+commands:
+  disc:
+    description: Create and manage custom discs
+    usage: /disc create <url> <name>
+permissions:
+  hazer.radio.use:
+    default: true
+  hazer.radio.admin:
+    default: op
+  hazer.disc.create:
+    default: op
+  hazer.disc.admin:
+    default: op
