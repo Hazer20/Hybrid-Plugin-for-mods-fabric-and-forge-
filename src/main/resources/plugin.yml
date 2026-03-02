@@ -6,8 +6,8 @@ author: Hazer_2_0
 description: Вставка изображений по URL в книги Minecraft.
 commands:
   bookimage:
-    description: Конвертировать URL в книге в визуальное изображение.
-    usage: /bookimage
+    description: Конвертация URL в книге и создание готовой книги с картинкой.
+    usage: /bookimage [create <url>]
     permission: bookimage.use
 permissions:
   bookimage.use:

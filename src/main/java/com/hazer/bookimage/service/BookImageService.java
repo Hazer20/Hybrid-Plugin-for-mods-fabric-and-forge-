@@ -6,7 +6,10 @@ import com.hazer.bookimage.util.JsonPayloadUtil;
 import com.hazer.bookimage.util.UrlUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 import javax.imageio.ImageIO;
@@ -51,21 +54,8 @@ public class BookImageService {
             }
 
             String url = firstUrl.get();
-            if (!UrlUtils.isValidImageUrl(url)) {
-                converted.add(Component.text("§cОшибка: недействительный URL изображения: " + url));
-                continue;
-            }
-
             try {
-                BufferedImage image = downloadImage(url);
-                if (image == null) {
-                    converted.add(Component.text("§cОшибка: не удалось прочитать изображение по URL."));
-                    continue;
-                }
-
-                BufferedImage scaled = ImageRenderUtil.scaleTo128(image);
-                String base64Meta = JsonPayloadUtil.encodeSourceUrl(url);
-                Component rendered = ImageRenderUtil.renderToComponent(scaled, base64Meta);
+                Component rendered = renderUrlToPage(url);
                 converted.add(rendered);
                 convertedPages++;
             } catch (IOException exception) {
@@ -99,6 +89,72 @@ public class BookImageService {
                 }
             });
         });
+    }
+
+    /**
+     * Create a new written book from URL and consume one writable book (book & quill) from player's inventory.
+     */
+    public void giveImageBookFromUrlAsync(Player player, String url) {
+        if (!UrlUtils.isValidImageUrl(url)) {
+            player.sendMessage("§cНедействительный URL. Разрешены только http/https PNG/JPEG ссылки.");
+            return;
+        }
+
+        if (!player.getInventory().contains(Material.WRITABLE_BOOK)) {
+            player.sendMessage("§cУ вас нет книги с пером (WRITABLE_BOOK) в инвентаре.");
+            return;
+        }
+
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                Component rendered = renderUrlToPage(url);
+
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (!player.isOnline()) {
+                        return;
+                    }
+
+                    ItemStack writableBook = new ItemStack(Material.WRITABLE_BOOK, 1);
+                    player.getInventory().removeItem(writableBook);
+
+                    ItemStack writtenBook = new ItemStack(Material.WRITTEN_BOOK);
+                    BookMeta meta = (BookMeta) writtenBook.getItemMeta();
+                    if (meta == null) {
+                        player.sendMessage("§cОшибка: не удалось создать книгу.");
+                        return;
+                    }
+
+                    meta.author("Hazer_2_0");
+                    meta.title("Image Book");
+                    meta.pages(List.of(rendered));
+                    writtenBook.setItemMeta(meta);
+
+                    var leftovers = player.getInventory().addItem(writtenBook);
+                    if (!leftovers.isEmpty()) {
+                        leftovers.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+                    }
+
+                    player.sendMessage("§aКнига с картинкой создана. Одна книга с пером была использована.");
+                });
+            } catch (IOException ex) {
+                Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cОшибка загрузки изображения: " + ex.getMessage()));
+            }
+        });
+    }
+
+    private Component renderUrlToPage(String url) throws IOException {
+        if (!UrlUtils.isValidImageUrl(url)) {
+            throw new IOException("Недействительный URL изображения: " + url);
+        }
+
+        BufferedImage image = downloadImage(url);
+        if (image == null) {
+            throw new IOException("Не удалось прочитать изображение по URL.");
+        }
+
+        BufferedImage scaled = ImageRenderUtil.scaleTo128(image);
+        String base64Meta = JsonPayloadUtil.encodeSourceUrl(url);
+        return ImageRenderUtil.renderToComponent(scaled, base64Meta);
     }
 
     private Optional<String> extractFirstUrl(String content) {

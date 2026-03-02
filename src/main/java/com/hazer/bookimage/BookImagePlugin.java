@@ -15,10 +15,10 @@ public class BookImagePlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
+        // No default config is required now; calling saveDefaultConfig without bundled config.yml causes startup failure.
         this.bookImageService = new BookImageService(this);
 
-        BookImageCommand commandExecutor = new BookImageCommand(this, bookImageService);
+        BookImageCommand commandExecutor = new BookImageCommand(bookImageService);
         PluginCommand pluginCommand = getCommand("bookimage");
         if (pluginCommand != null) {
             pluginCommand.setExecutor(commandExecutor);
@@ -27,7 +27,7 @@ public class BookImagePlugin extends JavaPlugin {
             getLogger().severe("Command /bookimage is missing in plugin.yml");
         }
 
-        getServer().getPluginManager().registerEvents(new BookListener(this, bookImageService), this);
+        getServer().getPluginManager().registerEvents(new BookListener(bookImageService), this);
         getLogger().info("BookImage enabled.");
     }
 

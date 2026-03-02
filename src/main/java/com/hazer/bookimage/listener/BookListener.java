@@ -1,6 +1,5 @@
 package com.hazer.bookimage.listener;
 
-import com.hazer.bookimage.BookImagePlugin;
 import com.hazer.bookimage.service.BookImageService;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -19,13 +18,10 @@ public class BookListener implements Listener {
 
     private final BookImageService bookImageService;
 
-    public BookListener(BookImagePlugin plugin, BookImageService bookImageService) {
+    public BookListener(BookImageService bookImageService) {
         this.bookImageService = bookImageService;
     }
 
-    /**
-     * Converts URL text to image component when a player finishes editing book content.
-     */
     @EventHandler(priority = EventPriority.NORMAL)
     public void onBookEdit(PlayerEditBookEvent event) {
         BookMeta newMeta = event.getNewBookMeta();
@@ -37,9 +33,6 @@ public class BookListener implements Listener {
         }
     }
 
-    /**
-     * Safety pass on opening written book in hand; useful for books generated before plugin install.
-     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBookOpen(PlayerInteractEvent event) {
         ItemStack item = event.getItem();
