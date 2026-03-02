@@ -1,6 +1,5 @@
 package com.hazer.hazefishing.manager;
 
-import com.google.gson.Gson;
 import com.hazer.hazefishing.HazerFishingPlugin;
 import com.hazer.hazefishing.model.NFTFish;
 import com.hazer.hazefishing.model.Rarity;
@@ -9,11 +8,9 @@ import org.bukkit.entity.Player;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 public final class NFTFishManager {
     private final HazerFishingPlugin plugin;
-    private final Gson gson = new Gson();
     private final Map<Long, NFTFish> registry = new ConcurrentHashMap<>();
     private long currentIndex = 1;
 
@@ -69,7 +66,12 @@ public final class NFTFishManager {
     }
 
     public String serializeTraits(NFTFish fish) {
-        return gson.toJson(fish.traits());
+        StringBuilder sb = new StringBuilder();
+        fish.traits().forEach((k, v) -> {
+            if (!sb.isEmpty()) sb.append(';');
+            sb.append(k).append('=').append(v);
+        });
+        return sb.toString();
     }
 
     private String pick(Random random, String... values) {

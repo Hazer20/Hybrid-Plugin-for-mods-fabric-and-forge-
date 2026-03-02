@@ -1,17 +1,18 @@
 package com.hazer.hazefishing.data;
 
 import com.hazer.hazefishing.HazerFishingPlugin;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
 public final class DatabaseManager {
     private final HazerFishingPlugin plugin;
-    private HikariDataSource dataSource;
+    private String jdbcUrl;
+    private Properties props;
 
     public DatabaseManager(HazerFishingPlugin plugin) {
         this.plugin = plugin;
@@ -19,18 +20,15 @@ public final class DatabaseManager {
 
     public void initialize() {
         String mode = plugin.getConfig().getString("database.mode", "sqlite");
-        HikariConfig config = new HikariConfig();
+        props = new Properties();
         if ("mysql".equalsIgnoreCase(mode)) {
-            config.setJdbcUrl(plugin.getConfig().getString("database.mysql.url"));
-            config.setUsername(plugin.getConfig().getString("database.mysql.username"));
-            config.setPassword(plugin.getConfig().getString("database.mysql.password"));
+            jdbcUrl = plugin.getConfig().getString("database.mysql.url");
+            props.setProperty("user", plugin.getConfig().getString("database.mysql.username", ""));
+            props.setProperty("password", plugin.getConfig().getString("database.mysql.password", ""));
         } else {
             File dbFile = new File(plugin.getDataFolder(), "hazefishing.db");
-            config.setJdbcUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
+            jdbcUrl = "jdbc:sqlite:" + dbFile.getAbsolutePath();
         }
-        config.setMaximumPoolSize(10);
-        config.setPoolName("HazeFishingPool");
-        dataSource = new HikariDataSource(config);
         createTables();
     }
 
@@ -80,12 +78,13 @@ public final class DatabaseManager {
     }
 
     public Connection getConnection() throws SQLException {
-        return dataSource.getConnection();
+        if (props == null || props.isEmpty()) {
+            return DriverManager.getConnection(jdbcUrl);
+        }
+        return DriverManager.getConnection(jdbcUrl, props);
     }
 
     public void shutdown() {
-        if (dataSource != null) {
-            dataSource.close();
-        }
+        // no pooled datasource to close
     }
 }
