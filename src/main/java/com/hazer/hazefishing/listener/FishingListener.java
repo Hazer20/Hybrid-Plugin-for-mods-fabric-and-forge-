@@ -29,17 +29,19 @@ public final class FishingListener implements Listener {
         Optional<NFTRod> rod = plugin.getNftRodManager().fromItem(rodItem);
         if (rod.isPresent() && !plugin.getSecurityManager().verifyRodUse(player, rod.get())) {
             event.setCancelled(true);
-            player.sendMessage("§cNFT Rod security verification failed.");
+            player.sendMessage("§cПроверка безопасности NFT-удочки не пройдена.");
             return;
         }
 
         Rarity rolled = rollRarity();
         if (rolled.ordinal() >= Rarity.DIVINE.ordinal()) {
-            plugin.getRgbAnimationManager().triggerFishAnimation(player, rolled.name() + " FISH");
+            plugin.getRgbAnimationManager().triggerFishAnimation(player, "УЛОВ " + rolled.name());
         }
 
         if (rolled == Rarity.NFT || ThreadLocalRandom.current().nextDouble(100) <= 0.0001) {
             NFTFish fish = plugin.getNftFishManager().generate(player, Rarity.NFT);
+            player.getInventory().addItem(plugin.getNftFishManager().toItem(fish));
+            player.sendMessage("§dВы поймали NFT-рыбу #" + fish.registryId());
             plugin.getEventManager().broadcastNftCatch(player, fish);
         }
     }
@@ -48,7 +50,7 @@ public final class FishingListener implements Listener {
         double roll = ThreadLocalRandom.current().nextDouble(100);
         double cursor = 0;
         for (Rarity rarity : Rarity.values()) {
-            cursor += rarity.getChance();
+            cursor += plugin.getAdminCommandManager().getChance(rarity);
             if (roll <= cursor) {
                 return rarity;
             }

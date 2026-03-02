@@ -57,7 +57,7 @@ public final class AdminPanelListener implements Listener {
             }
             case REPEATER -> plugin.getAdminCommandManager().runQuickSimulation(player, 1000);
             case BOOK -> player.sendMessage("§fRegistry entries: " + plugin.getNftFishManager().topRarest(5).size());
-            default -> player.sendMessage("§7Action confirmed: " + type);
+            default -> player.sendMessage("§7Действие подтверждено: " + type);
         }
     }
 }
