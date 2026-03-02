@@ -34,9 +34,13 @@ public final class FishCommand implements CommandExecutor, TabCompleter {
             case "mint" -> {
                 RodTier tier = args.length > 1 ? RodTier.parse(args[1]) : RodTier.NFT_ROD;
                 double cost = 1_000_000 * tier.rarityMultiplier();
-                if (!plugin.getEconomyManager().withdraw(player, cost)) {
-                    sender.sendMessage("§cNeed " + cost + " to mint");
-                    return true;
+                if (plugin.getEconomyManager().enabled()) {
+                    if (!plugin.getEconomyManager().withdraw(player, cost)) {
+                        sender.sendMessage("§cNeed " + cost + " to mint");
+                        return true;
+                    }
+                } else {
+                    sender.sendMessage("§eVault economy not hooked: free mint mode.");
                 }
                 var rod = plugin.getNftRodManager().mint(player, tier);
                 player.getInventory().addItem(plugin.getNftRodManager().toItem(rod));

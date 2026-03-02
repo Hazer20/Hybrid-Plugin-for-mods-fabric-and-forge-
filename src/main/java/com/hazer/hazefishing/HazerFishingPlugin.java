@@ -64,7 +64,7 @@ public final class HazerFishingPlugin extends JavaPlugin {
         animationScheduler.startPerformanceSampler();
 
         getServer().getPluginManager().registerEvents(new FishingListener(this), this);
-        getServer().getPluginManager().registerEvents(new AdminPanelListener(), this);
+        getServer().getPluginManager().registerEvents(new AdminPanelListener(this), this);
 
         registerCommands();
         getLogger().info("HazerFishing 4.0 NFT EDITION enabled.");

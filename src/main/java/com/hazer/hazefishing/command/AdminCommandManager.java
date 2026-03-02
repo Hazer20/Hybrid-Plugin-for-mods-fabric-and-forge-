@@ -2,6 +2,7 @@ package com.hazer.hazefishing.command;
 
 import com.hazer.hazefishing.HazerFishingPlugin;
 import com.hazer.hazefishing.model.NFTFish;
+import com.hazer.hazefishing.model.NFTRod;
 import com.hazer.hazefishing.model.Rarity;
 import com.hazer.hazefishing.model.RodTier;
 import org.bukkit.Bukkit;
@@ -24,6 +25,15 @@ public final class AdminCommandManager {
         return debugPerformance;
     }
 
+    public boolean toggleDebug() {
+        debugPerformance = !debugPerformance;
+        return debugPerformance;
+    }
+
+    public void runQuickSimulation(CommandSender sender, int amount) {
+        simulate(sender, new String[]{String.valueOf(amount)});
+    }
+
     public boolean handle(CommandSender sender, String[] args) {
         if (!sender.hasPermission("hazefishing.admin")) {
             sender.sendMessage("§cNo permission");
@@ -42,6 +52,8 @@ public final class AdminCommandManager {
             case "debug" -> debug(sender, Arrays.copyOfRange(args, 1, args.length));
             case "test" -> test(sender, Arrays.copyOfRange(args, 1, args.length));
             case "simulate" -> simulate(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "mint" -> mint(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "give" -> give(sender, Arrays.copyOfRange(args, 1, args.length));
             case "panel" -> {
                 if (sender instanceof Player player) plugin.getAdminPanel().open(player);
             }
@@ -49,6 +61,35 @@ public final class AdminCommandManager {
         }
         plugin.getAdminAuditLogger().log(sender.getName(), String.join(" ", args));
         return true;
+    }
+
+    private void mint(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("§cPlayers only.");
+            return;
+        }
+        if (args.length < 2 || !"testrod".equalsIgnoreCase(args[0])) {
+            sender.sendMessage("§e/hf mint testrod <rarity>");
+            return;
+        }
+        RodTier tier = RodTier.parse(args[1]);
+        NFTRod rod = plugin.getNftRodManager().mint(player, tier);
+        player.getInventory().addItem(plugin.getNftRodManager().toItem(rod));
+        player.sendMessage("§aMinted rod: " + rod.serial());
+    }
+
+    private void give(CommandSender sender, String[] args) {
+        if (args.length < 3 || !"rod".equalsIgnoreCase(args[0])) {
+            sender.sendMessage("§e/hf give rod <rarity> <player>");
+            return;
+        }
+        RodTier tier = RodTier.parse(args[1]);
+        Player target = resolveTarget(sender, args[2]);
+        if (target == null) return;
+        NFTRod rod = plugin.getNftRodManager().mint(target, tier);
+        target.getInventory().addItem(plugin.getNftRodManager().toItem(rod));
+        sender.sendMessage("§aRod given to " + target.getName());
+        target.sendMessage("§dAdmin gave you " + rod.uniqueName());
     }
 
     private void debug(CommandSender sender, String[] args) {
@@ -80,12 +121,14 @@ public final class AdminCommandManager {
             if (target == null) return;
             Rarity rarity = Rarity.parse(args[1]);
             NFTFish fish = plugin.getNftFishManager().generate(target, rarity);
+            target.getInventory().addItem(plugin.getNftFishManager().toItem(fish));
             sender.sendMessage("§aGenerated fish #" + fish.registryId() + " " + rarity);
             plugin.getRgbAnimationManager().triggerFishAnimation(target, "TEST " + rarity + " FISH");
         } else if ("nftfish".equalsIgnoreCase(args[0])) {
             Player target = resolveTarget(sender, args.length >= 2 ? args[1] : sender.getName());
             if (target == null) return;
             NFTFish fish = plugin.getNftFishManager().generate(target, Rarity.NFT);
+            target.getInventory().addItem(plugin.getNftFishManager().toItem(fish));
             plugin.getEventManager().broadcastNftCatch(target, fish);
             sender.sendMessage("§dNFT fish spawned: #" + fish.registryId());
         }
@@ -139,6 +182,15 @@ public final class AdminCommandManager {
             return Arrays.stream(Rarity.values()).map(Enum::name).toList();
         }
         if (args.length == 2 && "mint".equalsIgnoreCase(args[0])) {
+            return List.of("testrod");
+        }
+        if (args.length == 3 && "mint".equalsIgnoreCase(args[0]) && "testrod".equalsIgnoreCase(args[1])) {
+            return Arrays.stream(RodTier.values()).map(Enum::name).toList();
+        }
+        if (args.length == 2 && "give".equalsIgnoreCase(args[0])) {
+            return List.of("rod");
+        }
+        if (args.length == 3 && "give".equalsIgnoreCase(args[0]) && "rod".equalsIgnoreCase(args[1])) {
             return Arrays.stream(RodTier.values()).map(Enum::name).toList();
         }
         return List.of();

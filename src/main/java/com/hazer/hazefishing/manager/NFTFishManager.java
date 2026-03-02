@@ -3,7 +3,12 @@ package com.hazer.hazefishing.manager;
 import com.hazer.hazefishing.HazerFishingPlugin;
 import com.hazer.hazefishing.model.NFTFish;
 import com.hazer.hazefishing.model.Rarity;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.time.Instant;
 import java.util.*;
@@ -48,6 +53,20 @@ public final class NFTFishManager {
         registry.put(currentIndex, fish);
         currentIndex++;
         return fish;
+    }
+
+    public ItemStack toItem(NFTFish fish) {
+        ItemStack stack = new ItemStack(Material.COD);
+        ItemMeta meta = stack.getItemMeta();
+        meta.displayName(Component.text("NFT FISH #" + fish.registryId(), NamedTextColor.LIGHT_PURPLE));
+        meta.lore(List.of(
+                Component.text("Rarity: " + fish.rarity(), NamedTextColor.AQUA),
+                Component.text("Weight: " + String.format(Locale.US, "%.2f", fish.weight()) + "g", NamedTextColor.GRAY),
+                Component.text("Length: " + String.format(Locale.US, "%.2f", fish.length()) + "cm", NamedTextColor.GRAY),
+                Component.text("Element: " + fish.element(), NamedTextColor.GOLD)
+        ));
+        stack.setItemMeta(meta);
+        return stack;
     }
 
     public Collection<NFTFish> topRarest(int amount) {
