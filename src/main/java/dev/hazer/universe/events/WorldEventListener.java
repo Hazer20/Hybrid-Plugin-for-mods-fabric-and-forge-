@@ -14,9 +14,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.world.PortalCreateEvent;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -90,9 +92,20 @@ public class WorldEventListener implements Listener {
         fissureManager.findNear(event.getTo(), 2.0).ifPresent(fissure -> {
             fissureManager.consumeFissureTravel(event.getPlayer(), fissure);
             instabilityManager.applyInstability(event.getPlayer());
-            instabilityManager.onReturnStabilization(event.getPlayer());
         });
+    }
 
+    @EventHandler
+    public void onTeleport(PlayerTeleportEvent event) {
+        if (event.getTo() == null) {
+            return;
+        }
+        maybeClearInstabilityOnReturn(event.getPlayer(), event.getTo().getWorld());
+    }
+
+    @EventHandler
+    public void onWorldChange(PlayerChangedWorldEvent event) {
+        maybeClearInstabilityOnReturn(event.getPlayer(), event.getPlayer().getWorld());
     }
 
     @EventHandler
@@ -106,4 +119,13 @@ public class WorldEventListener implements Listener {
         }
     }
 
+    private void maybeClearInstabilityOnReturn(Player player, World world) {
+        if (world == null) {
+            return;
+        }
+        World mainWorld = Bukkit.getWorlds().getFirst();
+        if (world.equals(mainWorld) && instabilityManager.hasInstability(player)) {
+            instabilityManager.stabilizeAndClear(player);
+        }
+    }
 }

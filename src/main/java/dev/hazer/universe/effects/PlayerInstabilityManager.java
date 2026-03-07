@@ -70,6 +70,19 @@ public class PlayerInstabilityManager {
         }
     }
 
+    public boolean hasInstability(Player player) {
+        return instabilityStart.containsKey(player.getUniqueId());
+    }
+
+    public void stabilizeAndClear(Player player) {
+        if (!hasInstability(player)) {
+            return;
+        }
+        clear(player);
+        onReturnStabilization(player);
+        player.sendMessage(ChatColor.GREEN + "Нестабильность измерений снята. Организм стабилизируется.");
+    }
+
     public void clear(Player player) {
         instabilityStart.remove(player.getUniqueId());
     }
