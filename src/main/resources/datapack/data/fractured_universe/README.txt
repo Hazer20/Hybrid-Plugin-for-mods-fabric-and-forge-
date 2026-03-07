@@ -8,3 +8,10 @@ Datapack Fractured Universe
 - functions/models: служебные функции для кастомных моделей
 - structures: NBT-структуры лабораторий ARG
 - models: json-модели для resourcepack/datapack пайплайна
+
+Дополнительно (resourcepack-часть рядом с datapack):
+- assets/fractured_universe/textures/sky
+- assets/fractured_universe/textures/block
+- assets/fractured_universe/textures/item
+- assets/fractured_universe/models/block
+- assets/fractured_universe/models/item
