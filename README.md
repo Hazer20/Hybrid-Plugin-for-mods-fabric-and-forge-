@@ -9,6 +9,8 @@
 - Глобальный BossBar: **«Состояние вселенной: X%»**, скрыт до старта.
 - Фазовая деградация стабильности мира (100 → 0).
 - Разломы трёх типов: малый / великий / живой.
+- Видимый портал-разлом (рамка), безопасные телепорты без лавы/опасных блоков, возврат обратно через разлом.
+- Починка разлома командой `/universe fissure repair`.
 - Нестабильность игрока после разломов + «Стабилизация организма».
 - Портальные механики:
   - `/universe portals destroy`
@@ -47,7 +49,7 @@ mvn clean package
 - `/universe stop`
 - `/universe phase <0-4>`
 - `/universe starfall`
-- `/universe fissure <small|great|living|disable>`
+- `/universe fissure <small|great|living|disable|enable|repair>`
 - `/universe portals <destroy|wait>`
 - `/universe arg <start|random|stop|list>`
 - `/universe final`

@@ -52,14 +52,14 @@ public class EventScheduler {
             phaseManager.setPhase(stabilityManager.phaseFromStability());
         }, 20L * 30, degradeEverySec * 20L);
 
-        Bukkit.getScheduler().runTaskTimer(plugin, this::spawnRandomFissure, 20L * 60, 20L * 300);
+        scheduleRandomFissure();
         scheduleAutomaticArg();
         scheduleChunkCollapse();
     }
 
     public void scheduleStarfall() {
-        int min = plugin.getConfig().getInt("вселенная.звезда.минимум_минут", 5);
-        int max = plugin.getConfig().getInt("вселенная.звезда.максимум_минут", 20);
+        int min = plugin.getConfig().getInt("вселенная.звезда.минимум_минут", 3);
+        int max = plugin.getConfig().getInt("вселенная.звезда.максимум_минут", 10);
         int delayMinutes = ThreadLocalRandom.current().nextInt(min, max + 1);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             phaseManager.setPhase(EventPhase.PHASE_3_STARFALL);
@@ -87,24 +87,29 @@ public class EventScheduler {
 
     private void scheduleChunkCollapse() {
         int hours = plugin.getConfig().getInt("вселенная.коллапс_чанков.интервал_часов", 9);
+        long interval = hours * 20L * 3600L;
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (stabilityManager.isActive()) {
                 chunkCollapseManager.triggerCollapse();
             }
-        }, hours * 20L * 3600L, hours * 20L * 3600L);
+        }, interval, interval);
     }
 
-    private void spawnRandomFissure() {
-        if (!plugin.getConfig().getBoolean("разломы.включены", true)) {
-            return;
-        }
-        if (phaseManager.getPhase().ordinal() < EventPhase.PHASE_2_PORTAL_FAILURE.ordinal()) {
-            return;
-        }
-        World world = Bukkit.getWorlds().getFirst();
-        int x = ThreadLocalRandom.current().nextInt(-1200, 1201);
-        int z = ThreadLocalRandom.current().nextInt(-1200, 1201);
-        int y = world.getHighestBlockYAt(x, z) + 1;
-        fissureManager.spawnSmallFissure(new Location(world, x, y, z));
+    private void scheduleRandomFissure() {
+        int minSec = plugin.getConfig().getInt("вселенная.авто_разлом.минимум_сек", 480);
+        int maxSec = plugin.getConfig().getInt("вселенная.авто_разлом.максимум_сек", 1080);
+        long delay = ThreadLocalRandom.current().nextLong(minSec, maxSec + 1L) * 20L;
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (plugin.getConfig().getBoolean("разломы.включены", true)
+                    && phaseManager.getPhase().ordinal() >= EventPhase.PHASE_2_PORTAL_FAILURE.ordinal()) {
+                World world = Bukkit.getWorlds().getFirst();
+                int x = ThreadLocalRandom.current().nextInt(-1200, 1201);
+                int z = ThreadLocalRandom.current().nextInt(-1200, 1201);
+                int y = world.getHighestBlockYAt(x, z) + 1;
+                fissureManager.spawnSmallFissure(new Location(world, x, y, z));
+            }
+            scheduleRandomFissure();
+        }, delay);
     }
 }

@@ -93,9 +93,6 @@ public class WorldEventListener implements Listener {
             instabilityManager.onReturnStabilization(event.getPlayer());
         });
 
-        if (phaseManager.getPhase().ordinal() >= EventPhase.PHASE_1_ANOMALIES.ordinal()) {
-            maybeBlackChunk(event.getPlayer());
-        }
     }
 
     @EventHandler
@@ -109,14 +106,4 @@ public class WorldEventListener implements Listener {
         }
     }
 
-    private void maybeBlackChunk(Player player) {
-        if (ThreadLocalRandom.current().nextInt(3000) != 0) {
-            return;
-        }
-
-        Location location = player.getLocation();
-        player.spawnParticle(Particle.SQUID_INK, location.clone().add(0, 1, 0), 40, 1.2, 1.5, 1.2, 0.02);
-        player.playSound(location, Sound.ENTITY_WITHER_AMBIENT, 0.3f, 0.4f);
-        player.sendActionBar(ChatColor.BLACK + "Поток чанка поврежден...");
-    }
 }

@@ -73,12 +73,14 @@ public class UniverseCommand implements CommandExecutor, TabCompleter {
                 stabilityManager.start();
                 phaseManager.startEvent();
                 eventScheduler.scheduleStarfall();
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "function fractured_universe:sky/enable");
                 sender.sendMessage(ChatColor.GREEN + "Событие запущено.");
             }
             case "stop" -> {
                 argEventManager.stopEvent();
                 phaseManager.stopEvent();
                 stabilityManager.stop();
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "function fractured_universe:sky/disable");
                 sender.sendMessage(ChatColor.YELLOW + "Событие остановлено.");
             }
             case "phase" -> handlePhase(sender, args);
@@ -129,17 +131,29 @@ public class UniverseCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.YELLOW + "Генерация разломов и аномалий отключена.");
             return;
         }
+        if (args.length >= 2 && args[1].equalsIgnoreCase("enable")) {
+            plugin.getConfig().set("разломы.включены", true);
+            plugin.saveConfig();
+            sender.sendMessage(ChatColor.GREEN + "Генерация разломов и аномалий включена.");
+            return;
+        }
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage(ChatColor.RED + "Только игрок может создать разлом в своей точке.");
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.GRAY + "Использование: /universe fissure <small|great|living|disable>");
+            sender.sendMessage(ChatColor.GRAY + "Использование: /universe fissure <small|great|living|disable|repair|enable>");
             return;
         }
 
         Location location = player.getLocation();
+        if (args[1].equalsIgnoreCase("repair")) {
+            boolean repaired = fissureManager.repairNearestFissure(location, 8.0);
+            sender.sendMessage(repaired ? ChatColor.GREEN + "Разлом стабилизирован и закрыт." : ChatColor.RED + "Рядом нет активного разлома для починки.");
+            return;
+        }
+
         switch (args[1].toLowerCase()) {
             case "small" -> fissureManager.spawnSmallFissure(location);
             case "great" -> fissureManager.spawnGreatFissure(location);
@@ -247,7 +261,7 @@ public class UniverseCommand implements CommandExecutor, TabCompleter {
             return List.of("start", "stop", "phase", "starfall", "fissure", "debug", "lore", "portals", "arg", "final");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("fissure")) {
-            return List.of("small", "great", "living", "disable");
+            return List.of("small", "great", "living", "disable", "enable", "repair");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("lore")) {
             return List.of("add", "instability");
