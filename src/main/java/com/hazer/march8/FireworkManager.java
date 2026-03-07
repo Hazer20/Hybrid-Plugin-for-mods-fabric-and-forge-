@@ -53,7 +53,7 @@ public final class FireworkManager {
     }
 
     public void spawnImpactFirework(@NotNull Location location) {
-        spawnCelebrationFirework(location.clone().add(0, 0.3, 0), FireworkEffect.Type.BURST, List.of(Color.PINK, Color.WHITE, Color.RED));
+        spawnCelebrationFirework(location.clone().add(0, 0.3, 0), FireworkEffect.Type.BURST, List.of(Color.fromRGB(255, 105, 180), Color.WHITE, Color.RED));
     }
 
     public void spawnCelebrationFirework(@NotNull Location at, @NotNull FireworkEffect.Type type, @NotNull List<Color> colors) {
@@ -89,7 +89,7 @@ public final class FireworkManager {
 
     private List<Color> randomPalette() {
         List<List<Color>> palettes = List.of(
-                List.of(Color.PINK, Color.FUCHSIA, Color.WHITE),
+                List.of(Color.fromRGB(255, 105, 180), Color.FUCHSIA, Color.WHITE),
                 List.of(Color.RED, Color.MAROON, Color.WHITE),
                 List.of(Color.PURPLE, Color.FUCHSIA, Color.NAVY),
                 List.of(Color.ORANGE, Color.YELLOW, Color.WHITE)
