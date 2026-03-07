@@ -28,7 +28,7 @@ public class FissureManager {
     }
 
     public void spawnSmallFissure(Location location) {
-        long lifeSeconds = plugin.getConfig().getLong("fissures.small.lifetime-seconds", 600);
+        long lifeSeconds = plugin.getConfig().getLong("разломы.малый.жизнь_сек", 600);
         Fissure fissure = new Fissure(UUID.randomUUID(), FissureType.SMALL, location.clone(), System.currentTimeMillis() + (lifeSeconds * 1000));
         activeFissures.put(fissure.getId(), fissure);
         renderFissure(fissure);
@@ -39,7 +39,7 @@ public class FissureManager {
         Fissure fissure = new Fissure(UUID.randomUUID(), FissureType.GREAT, location.clone(), Long.MAX_VALUE);
         activeFissures.put(fissure.getId(), fissure);
         renderFissure(fissure);
-        spawnMobsAround(location, plugin.getConfig().getInt("fissures.great.mob-wave-size", 6));
+        spawnMobsAround(location, plugin.getConfig().getInt("разломы.великий.волна_мобов", 8));
         Bukkit.broadcastMessage(ChatColor.RED + "Великий разлом раскрылся: " + format(location));
     }
 
@@ -50,6 +50,9 @@ public class FissureManager {
     }
 
     public void spawnAmbientAnomaly() {
+        if (!plugin.getConfig().getBoolean("разломы.включены", true)) {
+            return;
+        }
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.spawnParticle(Particle.PORTAL, player.getLocation().add(0, 2.2, 0), 24, 0.8, 1.0, 0.8, 0.02);
             if (ThreadLocalRandom.current().nextDouble() < 0.08) {
@@ -112,7 +115,7 @@ public class FissureManager {
             loc.getWorld().spawnParticle(Particle.REVERSE_PORTAL, loc.clone().add(0, 1.2, 0), 15, 0.55, 1.2, 0.55, 0.01);
 
             if (fissure.getType() == FissureType.LIVING) {
-                int moveInterval = plugin.getConfig().getInt("fissures.living.move-interval-seconds", 20);
+                int moveInterval = plugin.getConfig().getInt("разломы.живой.шаг_перемещения_сек", 20);
                 if (ThreadLocalRandom.current().nextInt(Math.max(1, moveInterval)) == 0) {
                     Location moved = loc.clone().add(ThreadLocalRandom.current().nextInt(-8, 9), 0, ThreadLocalRandom.current().nextInt(-8, 9));
                     moved.setY(moved.getWorld().getHighestBlockYAt(moved) + 1);

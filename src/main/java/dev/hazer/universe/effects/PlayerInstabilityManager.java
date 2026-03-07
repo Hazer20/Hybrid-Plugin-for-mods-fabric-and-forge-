@@ -45,8 +45,8 @@ public class PlayerInstabilityManager {
     }
 
     public void tickInstability() {
-        long stageOne = plugin.getConfig().getLong("event.instability.stage-one-minutes", 20) * 60_000L;
-        long stageTwo = plugin.getConfig().getLong("event.instability.stage-two-minutes", 40) * 60_000L;
+        long stageOne = plugin.getConfig().getLong("нестабильность.стадия1_минут", 20) * 60_000L;
+        long stageTwo = plugin.getConfig().getLong("нестабильность.стадия2_минут", 40) * 60_000L;
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             Long start = instabilityStart.get(player.getUniqueId());
@@ -62,7 +62,7 @@ public class PlayerInstabilityManager {
                 }
             } else if (elapsed < stageTwo) {
                 player.damage(1.0);
-                player.sendMessage(ChatColor.RED + "Твое тело начинает распадаться между вселенными");
+                player.sendMessage(ChatColor.RED + "Ваше тело начинает распадаться между вселенными");
                 player.playSound(player.getLocation(), Sound.ENTITY_WARDEN_HEARTBEAT, 0.8f, 0.7f);
             } else {
                 player.damage(2.0);

@@ -2,15 +2,17 @@ package dev.hazer.universe.events;
 
 import dev.hazer.universe.FracturedUniverse;
 import dev.hazer.universe.effects.PlayerInstabilityManager;
-import dev.hazer.universe.portals.Fissure;
+import dev.hazer.universe.portals.PortalRitualManager;
 import dev.hazer.universe.portals.FissureManager;
 import dev.hazer.universe.systems.EventPhase;
 import dev.hazer.universe.systems.EventPhaseManager;
+import dev.hazer.universe.systems.UniverseStabilityManager;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -24,20 +26,35 @@ public class WorldEventListener implements Listener {
     private final EventPhaseManager phaseManager;
     private final FissureManager fissureManager;
     private final PlayerInstabilityManager instabilityManager;
+    private final PortalRitualManager portalRitualManager;
+    private final UniverseStabilityManager stabilityManager;
 
     public WorldEventListener(FracturedUniverse plugin,
                               EventPhaseManager phaseManager,
                               FissureManager fissureManager,
-                              PlayerInstabilityManager instabilityManager) {
+                              PlayerInstabilityManager instabilityManager,
+                              PortalRitualManager portalRitualManager,
+                              UniverseStabilityManager stabilityManager) {
         this.plugin = plugin;
         this.phaseManager = phaseManager;
         this.fissureManager = fissureManager;
         this.instabilityManager = instabilityManager;
+        this.portalRitualManager = portalRitualManager;
+        this.stabilityManager = stabilityManager;
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         phaseManager.attachPlayer(event.getPlayer());
+        stabilityManager.attachPlayer(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onIgnite(BlockIgniteEvent event) {
+        if (event.getPlayer() == null) {
+            return;
+        }
+        portalRitualManager.onNetherPortalIgnite(event.getBlock(), event.getPlayer());
     }
 
     @EventHandler
@@ -45,9 +62,9 @@ public class WorldEventListener implements Listener {
         if (phaseManager.getPhase().ordinal() >= EventPhase.PHASE_2_PORTAL_FAILURE.ordinal()) {
             event.setCancelled(true);
             Player player = event.getPlayer();
-            player.sendMessage(ChatColor.DARK_GRAY + "[ERROR] Unknown dimension");
-            player.sendMessage(ChatColor.DARK_GRAY + "[ERROR] Portal misalignment");
-            player.sendMessage(ChatColor.DARK_GRAY + "[ERROR] Reality fragmentation");
+            player.sendMessage(ChatColor.DARK_GRAY + "[ОШИБКА] Неизвестное измерение");
+            player.sendMessage(ChatColor.DARK_GRAY + "[ОШИБКА] Портал рассинхронизирован");
+            player.sendMessage(ChatColor.DARK_GRAY + "[ОШИБКА] Фрагментация реальности");
             player.playSound(player.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1f, 0.4f);
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -73,6 +90,7 @@ public class WorldEventListener implements Listener {
         fissureManager.findNear(event.getTo(), 2.0).ifPresent(fissure -> {
             fissureManager.consumeFissureTravel(event.getPlayer(), fissure);
             instabilityManager.applyInstability(event.getPlayer());
+            instabilityManager.onReturnStabilization(event.getPlayer());
         });
 
         if (phaseManager.getPhase().ordinal() >= EventPhase.PHASE_1_ANOMALIES.ordinal()) {
@@ -92,14 +110,13 @@ public class WorldEventListener implements Listener {
     }
 
     private void maybeBlackChunk(Player player) {
-        int interval = plugin.getConfig().getInt("event.black-chunk-interval-seconds", 210);
-        if (ThreadLocalRandom.current().nextInt(Math.max(1, interval)) != 0) {
+        if (ThreadLocalRandom.current().nextInt(3000) != 0) {
             return;
         }
 
         Location location = player.getLocation();
         player.spawnParticle(Particle.SQUID_INK, location.clone().add(0, 1, 0), 40, 1.2, 1.5, 1.2, 0.02);
         player.playSound(location, Sound.ENTITY_WITHER_AMBIENT, 0.3f, 0.4f);
-        player.sendActionBar(ChatColor.BLACK + "Chunk stream corrupted...");
+        player.sendActionBar(ChatColor.BLACK + "Поток чанка поврежден...");
     }
 }

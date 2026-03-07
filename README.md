@@ -1,49 +1,66 @@
 # FracturedUniverse (Paper 1.21.8)
 
-ARG-ивент о разрушении мультивселенной с фазами, разломами, нестабильностью игроков, лором и datapack-эффектами.
+Гибридная система **плагин + datapack** для сезонного ARG-ивента:
+**«Нарушение структуры вселенной»**.
 
-## Возможности
-- `/universe start|stop|phase|starfall|fissure|debug|lore`
-- Фазы ивента с bossbar и атмосферными ARG-сигналами в логах.
-- Портальный сбой (ошибки в чате + задержанный системный коллапс).
-- Разломы: **small / great / living**.
-- Система `Dimension Instability` (телепорты, урон, распад тела).
-- Стабилизация после межмирового перехода (blindness/nausea/weakness + bossbar).
-- База для кастомных миров: Broken Overworld / Cyber Dimension / Void Sea.
-- Хранилище лора игроков в `plugins/FracturedUniverse/player_lore.yml`.
-- Datapack: космические частицы, пульсация неба, служебные функции событий.
+Автор: **Hazer_2_0**
+
+## Что реализовано
+- Глобальный BossBar: **«Состояние вселенной: X%»**, скрыт до старта.
+- Фазовая деградация стабильности мира (100 → 0).
+- Разломы трёх типов: малый / великий / живой.
+- Нестабильность игрока после разломов + «Стабилизация организма».
+- Портальные механики:
+  - `/universe portals destroy`
+  - `/universe portals wait`
+- ARG система на **30 событий**:
+  - `/universe arg start <номер>`
+  - `/universe arg random`
+  - `/universe arg stop`
+  - `/universe arg list`
+- Событие падения звезды.
+- Пространственный коллапс чанков раз в **9 часов** (с восстановлением).
+- Финал сезона:
+  - `/universe final`
+  - спавн босса **The Fractured Architect**
+  - сообщение победы: «Структура реальности восстановлена».
+- Datapack контент: sky/events/particles/portals/models.
+- Автообнаружение кастомных моделей в `datapack/data/fractured_universe/models`.
 
 ## Сборка
 ```bash
 mvn clean package
 ```
-Готовый JAR: `target/FracturedUniverse-1.0.jar`
+Артефакт: `target/FracturedUniverse-1.0.jar`
 
 ## Установка
-1. Положить JAR в `plugins/`.
-2. Запустить сервер и убедиться, что создана папка `plugins/FracturedUniverse/`.
-3. Скопировать datapack из `src/main/resources/datapack` в `<мир>/datapacks/fractured_universe/`.
-4. В игре выполнить `/reload confirm` (или перезапустить сервер).
-5. Проверить: `/datapack list` и `/universe debug`.
+1. Скопируйте JAR в папку `plugins/`.
+2. Запустите сервер, чтобы создалась папка `plugins/FracturedUniverse/`.
+3. Скопируйте папку `src/main/resources/datapack` в `<ваш_мир>/datapacks/fractured_universe/`.
+4. Выполните `/reload confirm` или перезапустите сервер.
+5. Проверьте работу:
+   - `/datapack list`
+   - `/universe debug`
 
-## Быстрый сценарий запуска ARG
-1. Фаза 0: просто держим фоновые сигналы в логах.
-2. `/universe start` — фаза аномалий.
-3. `/universe phase 2` — включить портальные сбои и авто-разломы.
-4. `/universe starfall` (или ждать автотаймер) — падение звезды + великий разлом.
-5. Игроки документируют находки через `/universe lore add <текст>`.
+## Базовые команды
+- `/universe start`
+- `/universe stop`
+- `/universe phase <0-4>`
+- `/universe starfall`
+- `/universe fissure <small|great|living|disable>`
+- `/universe portals <destroy|wait>`
+- `/universe arg <start|random|stop|list>`
+- `/universe final`
+- `/universe lore add <текст>`
 
-## Конфиг
-Основные параметры в `src/main/resources/config.yml`:
-- интервалы аномалий/разломов;
-- окно автопадения звезды;
-- стадии нестабильности;
-- имена кастомных миров;
-- лимит длины лор-записей.
-
-## Примечания по производительности (50–100 игроков)
-- Тяжелые фоновые ARG-логи отправляются async-таской.
-- Периодические эффекты сгруппированы в таймеры с фиксированным интервалом.
-- Карта активных разломов и система нестабильности используют lightweight структуры в памяти.
-
-Автор: **Hazer_2_0**
+## Структура datapack
+```text
+data/fractured_universe
+  functions/
+  structures/
+  particles/
+  events/
+  bosses/
+  sky/
+  models/
+```

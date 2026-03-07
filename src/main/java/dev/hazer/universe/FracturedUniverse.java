@@ -1,13 +1,13 @@
 package dev.hazer.universe;
 
+import dev.hazer.universe.bosses.FinalBossManager;
 import dev.hazer.universe.commands.UniverseCommand;
 import dev.hazer.universe.effects.PlayerInstabilityManager;
 import dev.hazer.universe.events.WorldEventListener;
 import dev.hazer.universe.lore.LoreManager;
 import dev.hazer.universe.portals.FissureManager;
-import dev.hazer.universe.systems.ArgSignalService;
-import dev.hazer.universe.systems.EventPhaseManager;
-import dev.hazer.universe.systems.EventScheduler;
+import dev.hazer.universe.portals.PortalRitualManager;
+import dev.hazer.universe.systems.*;
 import dev.hazer.universe.worlds.WorldManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,6 +19,12 @@ public final class FracturedUniverse extends JavaPlugin {
     private WorldManager worldManager;
     private LoreManager loreManager;
     private ArgSignalService argSignalService;
+    private UniverseStabilityManager stabilityManager;
+    private ArgEventManager argEventManager;
+    private PortalRitualManager portalRitualManager;
+    private ChunkCollapseManager chunkCollapseManager;
+    private FinalBossManager finalBossManager;
+    private ModelRegistryService modelRegistryService;
 
     @Override
     public void onEnable() {
@@ -27,23 +33,32 @@ public final class FracturedUniverse extends JavaPlugin {
         this.phaseManager = new EventPhaseManager(this);
         this.worldManager = new WorldManager(this);
         this.loreManager = new LoreManager(this);
+        this.stabilityManager = new UniverseStabilityManager(this);
         this.fissureManager = new FissureManager(this, phaseManager, worldManager);
         this.instabilityManager = new PlayerInstabilityManager(this, phaseManager);
         this.argSignalService = new ArgSignalService(this, phaseManager);
-        this.eventScheduler = new EventScheduler(this, phaseManager, fissureManager, instabilityManager, argSignalService);
+        this.argEventManager = new ArgEventManager(this);
+        this.portalRitualManager = new PortalRitualManager(this);
+        this.chunkCollapseManager = new ChunkCollapseManager(this);
+        this.finalBossManager = new FinalBossManager(this);
+        this.modelRegistryService = new ModelRegistryService(this);
+
+        this.eventScheduler = new EventScheduler(this, phaseManager, fissureManager, instabilityManager, argSignalService, stabilityManager, argEventManager, chunkCollapseManager);
 
         getServer().getPluginManager().registerEvents(
-                new WorldEventListener(this, phaseManager, fissureManager, instabilityManager),
+                new WorldEventListener(this, phaseManager, fissureManager, instabilityManager, portalRitualManager, stabilityManager),
                 this
         );
 
-        UniverseCommand command = new UniverseCommand(this, phaseManager, eventScheduler, fissureManager, instabilityManager, worldManager, loreManager);
+        UniverseCommand command = new UniverseCommand(this, phaseManager, eventScheduler, fissureManager, instabilityManager,
+                worldManager, loreManager, stabilityManager, argEventManager, portalRitualManager, finalBossManager, modelRegistryService);
         getCommand("universe").setExecutor(command);
         getCommand("universe").setTabCompleter(command);
 
         loreManager.load();
+        modelRegistryService.scanDatapackModels();
         eventScheduler.bootstrap();
-        getLogger().info("FracturedUniverse has awakened.");
+        getLogger().info("FracturedUniverse запущен.");
     }
 
     @Override
@@ -52,6 +67,7 @@ public final class FracturedUniverse extends JavaPlugin {
         loreManager.save();
         fissureManager.cleanup();
         instabilityManager.cleanup();
-        getLogger().info("FracturedUniverse has gone silent.");
+        finalBossManager.finishSeason();
+        getLogger().info("FracturedUniverse остановлен.");
     }
 }

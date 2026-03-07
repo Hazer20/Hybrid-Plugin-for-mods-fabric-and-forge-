@@ -1,24 +1,29 @@
-event:
-  auto-anomaly-interval-seconds: 180
-  auto-fissure-interval-seconds: 420
-  starfall:
-    min-minutes: 5
-    max-minutes: 20
-  instability:
-    stage-one-minutes: 20
-    stage-two-minutes: 40
-  black-chunk-interval-seconds: 210
-worlds:
-  broken_overworld: fractured_broken_overworld
-  cyber_dimension: fractured_cyber_dimension
-  void_sea: fractured_void_sea
-fissures:
-  small:
-    lifetime-seconds: 600
-  great:
-    mob-wave-size: 6
-  living:
-    move-interval-seconds: 20
-lore:
-  max-entry-length: 320
-  archive-book-title: "A.R.C.H.I.V.E Fragment"
+вселенная:
+  стартовая_стабильность: 100
+  автоснижение_процентов_каждые_сек: 300
+  шаг_снижения: 2
+  звезда:
+    минимум_минут: 5
+    максимум_минут: 20
+  коллапс_чанков:
+    интервал_часов: 9
+    случайных_чанков: 3
+    восстановление_сек: 180
+разломы:
+  включены: true
+  малый:
+    жизнь_сек: 600
+  живой:
+    шаг_перемещения_сек: 20
+  великий:
+    волна_мобов: 8
+нестабильность:
+  стадия1_минут: 20
+  стадия2_минут: 40
+arg:
+  авто_интервал_мин: 30
+  авто_интервал_макс: 120
+миры:
+  сломанный_оверворлд: fractured_broken_overworld
+  кибер_измерение: fractured_cyber_dimension
+  море_пустоты: fractured_void_sea

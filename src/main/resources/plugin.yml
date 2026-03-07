@@ -5,10 +5,10 @@ author: Hazer_2_0
 api-version: '1.21'
 commands:
   universe:
-    description: Main command for Fractured Universe event
-    usage: /<command> <start|stop|phase|starfall|fissure|debug|lore>
+    description: Управление событием Нарушение структуры вселенной
+    usage: /universe <start|stop|phase|portals|fissure|arg|final|debug|lore|starfall>
     permission: fractureduniverse.admin
 permissions:
   fractureduniverse.admin:
-    description: Access to event administration
+    description: Доступ к управлению глобальным ивентом
     default: op
