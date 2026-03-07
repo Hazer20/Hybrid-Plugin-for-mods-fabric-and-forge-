@@ -1,0 +1,66 @@
+author: Hazer_2_0
+
+girls: []
+
+oraxen:
+  enabled-check: true
+  item-id: love_blade
+
+celebration:
+  title: "<gradient:#ff75c3:#ffd1ea><bold>С 8 Марта!</bold></gradient>"
+  subtitle: "<white>От всех парней сервера <gold><bold>DE Squad</bold></gold></white>"
+  title-fade-in: 10
+  title-stay: 70
+  title-fade-out: 20
+  chat-lines:
+    - "<pink>От всех парней сервера поздравляем вас с Международным женским днём!</pink>"
+    - "<#ff9ad7>Пусть этот день будет ярким как фейерверки над сервером.</#ff9ad7>"
+    - "<#ffc5e8>Спасибо что вы делаете сервер лучше.</#ffc5e8>"
+    - "<gradient:#ff75c3:#ffd1ea><bold>С праздником!</bold></gradient>"
+
+effects:
+  base-particles:
+    - HEART
+    - CHERRY_LEAVES
+    - FIREWORK
+    - GLOW
+  spring-aura:
+    interval-ticks: 40
+    duration-seconds: 300
+    particles:
+      - HEART
+      - CHERRY_LEAVES
+      - PINK_DUST
+  sword-aura:
+    interval-ticks: 10
+    particles:
+      - HEART
+      - PINK_DUST
+
+fireworks:
+  on-start:
+    count: 3
+  final-delay-seconds: 5
+  final-overhead:
+    count: 1
+
+gifts:
+  rose:
+    material: POPPY
+    amount: 101
+    name: "<gradient:#ff6699:#ff99cc><bold>101 Роза</bold></gradient>"
+    lore:
+      - "<white>Пусть каждая роза</white>"
+      - "<white>подарит улыбку</white>"
+      - ""
+      - "<gold>От игроков сервера DE Squad</gold>"
+  sword:
+    fallback-material: DIAMOND_SWORD
+    name: "<gradient:#ff99cc:#ff66b2><bold>Клинок Весны</bold></gradient>"
+    lore:
+      - "<white>Подарок на 8 марта</white>"
+      - "<white>От всего сервера</white>"
+      - ""
+      - "<pink>Каждый удар несёт магию весны</pink>"
+    heart-hit-chance: 0.30
+    firework-hit-chance: 0.10
