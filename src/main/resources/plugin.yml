@@ -1,0 +1,20 @@
+name: March8Plugin
+version: 1.0.0
+main: com.hazer.march8.March8Plugin
+api-version: '1.21'
+author: Hazer_2_0
+description: Профессиональный плагин к 8 марта с интеграцией Oraxen и fallback системой.
+softdepend:
+  - Oraxen
+commands:
+  march8:
+    description: Управление поздравлением 8 марта
+    usage: /march8 <add|remove|list|start|reload>
+    permission: march8.admin
+permissions:
+  march8.admin:
+    description: Доступ к административным командам March8
+    default: op
+  march8.receive:
+    description: Получение поздравления и подарков March8
+    default: true
