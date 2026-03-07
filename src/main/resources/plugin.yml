@@ -1,0 +1,6 @@
+name: AdminMaintenance
+version: 1.0
+main: me.hazer.adminmaintenance.AdminMaintenance
+api-version: 1.21
+author: Hazer
+description: Only OP players can join during maintenance
