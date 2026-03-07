@@ -27,6 +27,7 @@ arg:
   авто_интервал_мин: 30
   авто_интервал_макс: 120
 миры:
+  предзагрузка_на_старте: false
   сломанный_оверворлд: fractured_broken_overworld
   кибер_измерение: fractured_cyber_dimension
   море_пустоты: fractured_void_sea

@@ -30,6 +30,21 @@
 - Datapack контент: sky/events/particles/portals/models.
 - Автообнаружение кастомных моделей в `datapack/data/fractured_universe/models`.
 
+
+## Память и запуск на ПК с 8 ГБ RAM (важно)
+Если сервер падает с ошибкой нехватки **native memory** (не Java heap), не завышайте `-Xmx`.
+
+Рекомендованный профиль для 8 ГБ RAM:
+- `-Xms2G -Xmx4G`
+- лимиты non-heap: `MaxMetaspaceSize=384M`, `MaxDirectMemorySize=512M`, `ReservedCodeCacheSize=256M`
+- умеренный стек: `-Xss512k`
+
+Готовые скрипты в репозитории:
+- `run-paper-8gb.bat` (Windows)
+- `run-paper-8gb.sh` (Linux)
+
+Почему так: при слишком большом `-Xmx` (например 8G на системе с 8G RAM) JVM и Paper/Folia упираются в адресное пространство/нативную память (threads, direct buffers, metaspace, code cache), даже если heap не переполнен.
+
 ## Сборка
 ```bash
 mvn clean package
@@ -44,6 +59,9 @@ mvn clean package
 5. Проверьте работу:
    - `/datapack list`
    - `/universe debug`
+
+## Память плагина
+- `миры.предзагрузка_на_старте: false` (по умолчанию) — не грузит кастомные миры заранее, чтобы снизить пиковое потребление памяти.
 
 ## Базовые команды
 - `/universe start`

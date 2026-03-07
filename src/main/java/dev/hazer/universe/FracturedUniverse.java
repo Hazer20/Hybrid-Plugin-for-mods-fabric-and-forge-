@@ -43,7 +43,9 @@ public final class FracturedUniverse extends JavaPlugin {
         this.finalBossManager = new FinalBossManager(this);
         this.modelRegistryService = new ModelRegistryService(this);
 
-        worldManager.preloadEventWorlds();
+        if (getConfig().getBoolean("миры.предзагрузка_на_старте", false)) {
+            worldManager.preloadEventWorlds();
+        }
 
         this.eventScheduler = new EventScheduler(this, phaseManager, fissureManager, instabilityManager, argSignalService, stabilityManager, argEventManager, chunkCollapseManager);
 
