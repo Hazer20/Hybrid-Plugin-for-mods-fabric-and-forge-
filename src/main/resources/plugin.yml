@@ -1,0 +1,14 @@
+name: FracturedUniverse
+version: 1.0
+main: dev.hazer.universe.FracturedUniverse
+author: Hazer_2_0
+api-version: '1.21'
+commands:
+  universe:
+    description: Main command for Fractured Universe event
+    usage: /<command> <start|stop|phase|starfall|fissure|debug|lore>
+    permission: fractureduniverse.admin
+permissions:
+  fractureduniverse.admin:
+    description: Access to event administration
+    default: op
