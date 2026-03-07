@@ -4,3 +4,12 @@ main: me.hazer.adminmaintenance.AdminMaintenance
 api-version: 1.21
 author: Hazer
 description: Only OP players can join during maintenance
+commands:
+  maintenance:
+    description: Enable or disable maintenance mode
+    usage: /maintenance <on|off>
+    permission: adminmaintenance.manage
+permissions:
+  adminmaintenance.manage:
+    description: Allows toggling maintenance mode
+    default: op
