@@ -1,29 +1,52 @@
 package com.hazerengine.resourcepack;
 
+import com.hazerengine.api.ResourcePackAPI;
 import com.hazerengine.items.CustomItem;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.Collection;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ResourcePackBuilder {
-    public Path generate(Path output, Collection<CustomItem> items) throws IOException {
+    public Path generate(Path output, Collection<CustomItem> items, ResourcePackAPI extensions) throws IOException {
         Path temp = Files.createTempDirectory("hazer-pack");
-        Files.createDirectories(temp.resolve("assets/hazerengine/textures"));
-        Files.createDirectories(temp.resolve("assets/hazerengine/models"));
-        Files.createDirectories(temp.resolve("assets/hazerengine/sounds"));
-        Files.createDirectories(temp.resolve("assets/hazerengine/fonts"));
+        Path assets = temp.resolve("assets/hazerengine");
+        Files.createDirectories(assets.resolve("textures"));
+        Files.createDirectories(assets.resolve("models"));
+        Files.createDirectories(assets.resolve("sounds"));
+        Files.createDirectories(assets.resolve("fonts"));
 
         for (CustomItem item : items) {
-            Path model = temp.resolve("assets/hazerengine/models/" + item.id() + ".json");
+            Path model = assets.resolve("models/" + item.id() + ".json");
             String json = "{\"parent\":\"item/generated\",\"textures\":{\"layer0\":\"hazerengine:item/" + item.id() + "\"}}";
             Files.writeString(model, json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
 
+        if (extensions != null) {
+            copyAssets(extensions.textures(), assets.resolve("textures"));
+            copyAssets(extensions.models(), assets.resolve("models"));
+            copyAssets(extensions.sounds(), assets.resolve("sounds"));
+        }
+
         zipDirectory(temp, output);
         return output;
+    }
+
+    private void copyAssets(Map<String, java.io.File> source, Path targetDir) throws IOException {
+        for (Map.Entry<String, java.io.File> entry : source.entrySet()) {
+            if (entry.getValue().exists()) {
+                String ext = extension(entry.getValue().getName());
+                Files.copy(entry.getValue().toPath(), targetDir.resolve(entry.getKey() + ext), StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+    }
+
+    private String extension(String fileName) {
+        int idx = fileName.lastIndexOf('.');
+        return idx > -1 ? fileName.substring(idx) : ".dat";
     }
 
     private void zipDirectory(Path sourceDir, Path outputZip) throws IOException {

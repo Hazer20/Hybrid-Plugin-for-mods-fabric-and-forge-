@@ -1,6 +1,8 @@
 package com.hazerengine.items;
 
 import com.hazerengine.abilities.Ability;
+import com.hazerengine.components.DamageComponent;
+import com.hazerengine.components.TextureComponent;
 import com.hazerengine.components.ItemComponent;
 import com.hazerengine.core.api.Identifiable;
 import org.bukkit.Material;
@@ -45,6 +47,8 @@ public class CustomItem implements Identifiable {
         public Builder name(String name) { this.name = name; return this; }
         public Builder material(Material material) { this.material = material; return this; }
         public Builder modelData(int modelData) { this.modelData = modelData; return this; }
+        public Builder damage(double damage) { this.components.add(new DamageComponent(damage)); return this; }
+        public Builder texture(String texturePath) { this.components.add(new TextureComponent(this.modelData, texturePath)); return this; }
         public Builder component(ItemComponent component) { this.components.add(component); return this; }
         public Builder ability(Ability ability) { this.ability = ability; return this; }
         public CustomItem build() { return new CustomItem(id, name, material, modelData, components, ability); }

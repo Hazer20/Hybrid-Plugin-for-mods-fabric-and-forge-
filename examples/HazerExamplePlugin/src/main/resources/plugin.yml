@@ -1,0 +1,7 @@
+name: HazerExamplePlugin
+version: 1.0.0
+main: com.hazerexample.HazerExamplePlugin
+api-version: '1.21'
+depend:
+  - HazerEngine
+required-hazer-version: 1.1

@@ -2,6 +2,39 @@
 
 Massive modular Minecraft Paper 1.21.8 framework by **Hazer_2_0**.
 
+## HazerEngine as central server API kernel
+HazerEngine exposes public Bukkit services so third-party plugins can connect at runtime via `Bukkit.getServicesManager()`.
+
+### Public APIs
+- `HazerAPI`
+- `ItemAPI`
+- `AbilityAPI`
+- `RecipeAPI`
+- `GUIAPI`
+- `EconomyAPI`
+- `NPCAPI`
+- `ResourcePackAPI`
+
+### Third-party plugin dependency
+```yaml
+depend:
+  - HazerEngine
+# or
+softdepend:
+  - HazerEngine
+required-hazer-version: 1.1
+```
+
+### Example
+```java
+ItemAPI itemAPI = HazerAPI.getItemAPI();
+CustomItem item = itemAPI.createItem("shadow_blade")
+        .name("§5Shadow Blade")
+        .modelData(2001)
+        .build();
+itemAPI.register(item);
+```
+
 ## Modules
 - HazerEngineCore
 - HazerItems
@@ -17,11 +50,3 @@ Massive modular Minecraft Paper 1.21.8 framework by **Hazer_2_0**.
 - HazerMagic
 - HazerDungeons
 - HazerMobs
-
-## Features
-- Global registries for items, abilities, recipes, NPC, quests, mobs, and dungeons.
-- Component-based custom item engine.
-- Ability API with lifecycle hooks.
-- Auto resource pack generation pipeline.
-- Custom economy, combat, quests, NPC, mobs, and dungeon foundations.
-- Data-driven YAML bootstrap files.

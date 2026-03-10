@@ -1,8 +1,10 @@
 package com.hazerengine.core.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,9 +17,11 @@ public class ConfigService {
     }
 
     public void loadDefaults() {
+        plugin.getDataFolder().mkdirs();
         for (String file : new String[]{"config.yml", "items.yml", "abilities.yml", "recipes.yml", "mobs.yml", "quests.yml"}) {
             plugin.saveResource(file, false);
-            loaded.put(file, plugin.getConfig());
+            File cfg = new File(plugin.getDataFolder(), file);
+            loaded.put(file, YamlConfiguration.loadConfiguration(cfg));
         }
     }
 
