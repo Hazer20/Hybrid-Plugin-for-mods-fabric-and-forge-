@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':desquad-api')
+    implementation project(':desquad-engine')
+    implementation project(':modules:items')
+    implementation project(':modules:npc')
+    implementation project(':modules:economy')
+    implementation project(':modules:gui')
+    implementation project(':modules:mobs')
+    implementation project(':modules:blocks')
+    implementation project(':modules:performance')
+    compileOnly 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
+}
+
+tasks.named('jar') {
+    archiveFileName = 'DESquadCore-1.21.8.jar'
+}

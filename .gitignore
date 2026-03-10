@@ -1,0 +1,9 @@
+# Игнорировать сборки и бинарники
+*.jar
+*.exe
+*.dll
+*.class
+build/
+out/
+*.log
+*.tmp

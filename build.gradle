@@ -1,0 +1,53 @@
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.wrapper.Wrapper
+
+plugins {
+    id 'base'
+}
+
+allprojects {
+    group = 'com.desquad'
+    version = '1.21.8'
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    }
+}
+
+subprojects {
+    pluginManager.withPlugin('java') {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
+            withJavadocJar()
+            withSourcesJar()
+        }
+
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = 'UTF-8'
+            options.release = 21
+        }
+
+        tasks.withType(Test).configureEach {
+            useJUnitPlatform()
+        }
+
+        dependencies {
+            testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+        }
+    }
+}
+
+tasks.named('wrapper', Wrapper) {
+    gradleVersion = '8.14.3'
+    distributionType = Wrapper.DistributionType.BIN
+}
+
+tasks.register('buildServerJar', Copy) {
+    group = 'build'
+    description = 'Builds DESquadCore-1.21.8.jar in root build/libs directory.'
+    dependsOn(':desquad-server:jar')
+    from(project(':desquad-server').layout.buildDirectory.file('libs/DESquadCore-1.21.8.jar'))
+    into(layout.buildDirectory.dir('libs'))
+}

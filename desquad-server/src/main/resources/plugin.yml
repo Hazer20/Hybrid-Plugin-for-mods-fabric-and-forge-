@@ -1,0 +1,16 @@
+name: DESquadCore
+version: 1.21.8
+main: com.desquad.server.DESquadCorePlugin
+api-version: '1.21'
+authors: [DESquad]
+commands:
+  desquad:
+    description: DESquad core command
+  npc:
+    description: NPC command
+  economy:
+    description: Economy command
+  balance:
+    description: Balance command
+  pay:
+    description: Pay command

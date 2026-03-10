@@ -1,0 +1,4 @@
+npc:
+  default-skin: villager
+  dialogue-enabled: true
+  trading-enabled: true

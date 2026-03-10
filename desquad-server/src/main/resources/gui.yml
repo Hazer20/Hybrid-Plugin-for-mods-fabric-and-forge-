@@ -1,0 +1,3 @@
+gui:
+  animation-tick-rate: 2
+  cache-size: 128
