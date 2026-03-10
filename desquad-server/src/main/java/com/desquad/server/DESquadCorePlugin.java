@@ -15,11 +15,13 @@ import com.desquad.engine.models.InMemoryModelService;
 import com.desquad.engine.module.ModuleLoader;
 import com.desquad.engine.npc.InMemoryNPCManager;
 import com.desquad.engine.performance.AsyncExecutionEngine;
+import com.desquad.engine.tick.DesquadTickLoop;
 import com.desquad.server.commands.BalanceCommand;
 import com.desquad.server.commands.DesquadCommand;
 import com.desquad.server.commands.EconomyCommand;
 import com.desquad.server.commands.NpcCommand;
 import com.desquad.server.commands.PayCommand;
+import com.desquad.server.runtime.ServerTickRuntime;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,6 +30,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class DESquadCorePlugin extends JavaPlugin {
     private ModuleLoader moduleLoader;
     private AsyncExecutionEngine performanceEngine;
+    private DesquadTickLoop tickLoop;
+    private ServerTickRuntime tickRuntime;
 
     @Override
     public void onEnable() {
@@ -53,7 +57,12 @@ public final class DESquadCorePlugin extends JavaPlugin {
 
         DESquadAPI.bootstrap(new ServiceContainer(items, npcs, economy, gui, dialogue, models, blocks, mobs, moduleLoader, performanceEngine));
 
-        Objects.requireNonNull(getCommand("desquad")).setExecutor(new DesquadCommand());
+        tickLoop = new DesquadTickLoop(getLogger());
+        tickRuntime = new ServerTickRuntime(this, tickLoop);
+        tickRuntime.registerDefaults();
+        tickRuntime.start();
+
+        Objects.requireNonNull(getCommand("desquad")).setExecutor(new DesquadCommand(tickLoop));
         Objects.requireNonNull(getCommand("npc")).setExecutor(new NpcCommand());
         Objects.requireNonNull(getCommand("economy")).setExecutor(new EconomyCommand());
         Objects.requireNonNull(getCommand("balance")).setExecutor(new BalanceCommand());
@@ -64,6 +73,9 @@ public final class DESquadCorePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (tickRuntime != null) {
+            tickRuntime.stop();
+        }
         if (moduleLoader != null) {
             moduleLoader.disableAll();
         }

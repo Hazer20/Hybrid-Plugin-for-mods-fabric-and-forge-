@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.wrapper.Wrapper
 
 plugins {
@@ -41,4 +42,12 @@ subprojects {
 tasks.named('wrapper', Wrapper) {
     gradleVersion = '8.14.3'
     distributionType = Wrapper.DistributionType.BIN
+}
+
+tasks.register('buildServerJar', Copy) {
+    group = 'build'
+    description = 'Builds DESquadCore-1.21.8.jar in root build/libs directory.'
+    dependsOn(':desquad-server:jar')
+    from(project(':desquad-server').layout.buildDirectory.file('libs/DESquadCore-1.21.8.jar'))
+    into(layout.buildDirectory.dir('libs'))
 }

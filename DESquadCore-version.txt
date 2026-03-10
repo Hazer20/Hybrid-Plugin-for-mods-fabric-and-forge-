@@ -1,1 +1,1 @@
-DESquadCore 1.21.8 - Patch 1.0.2
+DESquadCore 1.21.8 - Patch 1.0.3

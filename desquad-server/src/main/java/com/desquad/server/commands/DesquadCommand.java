@@ -1,6 +1,7 @@
 package com.desquad.server.commands;
 
 import com.desquad.api.DESquadAPI;
+import com.desquad.engine.tick.DesquadTickLoop;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -10,14 +11,21 @@ import org.bukkit.entity.Player;
 
 /** Главная команда ядра DESquadCore. */
 public final class DesquadCommand implements CommandExecutor {
+    private final DesquadTickLoop tickLoop;
+
+    public DesquadCommand(DesquadTickLoop tickLoop) {
+        this.tickLoop = tickLoop;
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0 || args[0].equalsIgnoreCase("info")) {
-            sender.sendMessage("§6DESquadCore §f1.21.8 Patch 1.0.2");
+            sender.sendMessage("§6DESquadCore §f1.21.8 Patch 1.0.3");
             sender.sendMessage("§7Items: " + DESquadAPI.getItemRegistry().allItems().size());
             sender.sendMessage("§7NPC: " + DESquadAPI.getNPCManager().all().size());
             sender.sendMessage("§7Modules: " + DESquadAPI.getModuleManager().enabledModules().size());
             sender.sendMessage("§7Perf pools: " + DESquadAPI.getPerformanceService().poolSizes());
+            sender.sendMessage("§7Tick subsystems: " + tickLoop.subsystemCount() + ", current tick: " + tickLoop.currentTick());
             return true;
         }
         if (args[0].equalsIgnoreCase("reload")) {

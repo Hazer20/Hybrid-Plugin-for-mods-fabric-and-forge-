@@ -9,3 +9,7 @@ performance:
   tick-dispatch-enabled: true
   gpu-acceleration: auto
   resourcepack-animation-offload: true
+tick-loop:
+  custom-blocks-enabled: true
+  custom-mobs-enabled: true
+  diagnostics-log-interval-ticks: 1200
