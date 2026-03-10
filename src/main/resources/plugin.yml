@@ -1,0 +1,7 @@
+name: HazerEngine
+version: 1.1.0
+main: com.hazerengine.core.HazerEnginePlugin
+api-version: '1.21'
+author: Hazer_2_0
+description: Massive modular Hypixel-style server framework.
+load: POSTWORLD
