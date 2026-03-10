@@ -4,9 +4,9 @@ import com.hazerengine.abilities.AbstractParticleAbility;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 
-public class DashAbility extends AbstractParticleAbility {{
+public class DashAbility extends AbstractParticleAbility {
     @Override
-    public void onUse(Player player) {{
+    public void onUse(Player player) {
         burst(player, Particle.CRIT, 24);
-    }}
-}}
+    }
+}
