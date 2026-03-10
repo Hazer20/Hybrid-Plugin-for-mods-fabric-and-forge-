@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.wrapper.Wrapper
+
 plugins {
     id 'base'
 }
@@ -13,25 +15,30 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java'
+    pluginManager.withPlugin('java') {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
+            withJavadocJar()
+            withSourcesJar()
+        }
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-        withJavadocJar()
-        withSourcesJar()
-    }
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = 'UTF-8'
+            options.release = 21
+        }
 
-    tasks.withType(JavaCompile).configureEach {
-        options.encoding = 'UTF-8'
-        options.release = 21
-    }
+        tasks.withType(Test).configureEach {
+            useJUnitPlatform()
+        }
 
-    tasks.withType(Test).configureEach {
-        useJUnitPlatform()
+        dependencies {
+            testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+        }
     }
+}
 
-    dependencies {
-        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
-    }
+tasks.named('wrapper', Wrapper) {
+    gradleVersion = '8.14.3'
+    distributionType = Wrapper.DistributionType.BIN
 }
