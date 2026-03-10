@@ -1,0 +1,9 @@
+modules:
+  auto-enable:
+    - items
+    - npc
+    - economy
+    - gui
+    - blocks
+    - mobs
+    - performance

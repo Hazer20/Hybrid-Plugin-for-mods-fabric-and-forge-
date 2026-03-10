@@ -1,0 +1,3 @@
+rootProject.name = 'DESquadCore'
+
+include 'desquad-api', 'desquad-engine', 'desquad-server', 'modules:items', 'modules:npc', 'modules:economy', 'modules:gui', 'modules:blocks', 'modules:mobs', 'modules:performance'

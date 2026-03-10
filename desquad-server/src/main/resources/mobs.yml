@@ -1,0 +1,5 @@
+mobs:
+  stone_guardian:
+    base-entity: IRON_GOLEM
+    max-health: 60
+    attack-damage: 12

@@ -1,0 +1,7 @@
+items:
+  dragon_sword:
+    material: NETHERITE_SWORD
+    custom-model-data: 40001
+    texture: dragon_sword
+    nbt:
+      desquad:item-id: dragon_sword

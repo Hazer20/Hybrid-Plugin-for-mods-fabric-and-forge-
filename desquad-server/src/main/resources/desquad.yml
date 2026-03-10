@@ -1,0 +1,11 @@
+core:
+  name: DESquadCore
+  mc-version: 1.21.8
+  async-workers: 4
+  tick-optimizations: true
+performance:
+  worker-threads: 8
+  ai-batch-size: 128
+  tick-dispatch-enabled: true
+  gpu-acceleration: auto
+  resourcepack-animation-offload: true

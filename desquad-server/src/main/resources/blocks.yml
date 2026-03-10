@@ -1,0 +1,5 @@
+blocks:
+  arcane_forge:
+    material: SMITHING_TABLE
+    custom-model-data: 50001
+    hardness: 8
