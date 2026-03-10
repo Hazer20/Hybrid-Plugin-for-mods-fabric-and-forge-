@@ -1,0 +1,4 @@
+engine:
+  debug: true
+  async-threads: 4
+  auto-pack-send: true
