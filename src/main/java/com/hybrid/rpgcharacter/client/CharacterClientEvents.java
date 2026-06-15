@@ -1,25 +1,43 @@
 package com.hybrid.rpgcharacter.client;
 
 import com.hybrid.rpgcharacter.network.ClientCharacterCache;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.PauseScreen;
-import net.minecraft.network.chat.Component;
-import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.common.MinecraftForge;
+import org.lwjgl.glfw.GLFW;
 
-/** Client-only hooks for opening the character screen from vanilla UI. */
+/** Client-only hooks for opening the character screen with a configurable key binding. */
 public class CharacterClientEvents {
+    private static final KeyMapping OPEN_CHARACTER_SCREEN = new KeyMapping(
+            "key.epicfight.open_character_screen",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_V,
+            "key.categories.epicfight");
+
+    /** Registers this client hook on both the mod and Forge event buses. */
+    public static void register(IEventBus modEventBus) {
+        CharacterClientEvents handler = new CharacterClientEvents();
+        modEventBus.register(handler);
+        MinecraftForge.EVENT_BUS.register(handler);
+    }
+
     @SubscribeEvent
-    public void onScreenInit(ScreenEvent.Init.Post event) {
-        if (event.getScreen() instanceof PauseScreen screen) {
-            int x = screen.width / 2 - 102;
-            int y = screen.height / 4 + 144;
-            event.addListener(Button.builder(Component.translatable("button.epicfight.character"), button ->
-                            Minecraft.getInstance().setScreen(new CharacterScreen(ClientCharacterCache.getLocalCharacter())))
-                    .pos(x, y)
-                    .size(204, 20)
-                    .build());
+    public void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(OPEN_CHARACTER_SCREEN);
+    }
+
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        while (OPEN_CHARACTER_SCREEN.consumeClick()) {
+            Minecraft.getInstance().setScreen(new CharacterScreen(ClientCharacterCache.getLocalCharacter()));
         }
     }
 }

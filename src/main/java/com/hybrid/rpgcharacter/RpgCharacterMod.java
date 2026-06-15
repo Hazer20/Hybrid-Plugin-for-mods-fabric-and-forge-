@@ -27,6 +27,6 @@ public final class RpgCharacterMod {
         CharacterSavedData.registerFactory();
         MinecraftForge.EVENT_BUS.register(new CharacterEventHandler());
         MinecraftForge.EVENT_BUS.register(new CharacterCommandHandler());
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MinecraftForge.EVENT_BUS.register(new CharacterClientEvents()));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> CharacterClientEvents.register(FMLJavaModLoadingContext.get().getModEventBus()));
     }
 }
