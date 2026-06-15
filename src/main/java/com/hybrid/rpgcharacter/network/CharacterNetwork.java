@@ -18,6 +18,8 @@ public final class CharacterNetwork {
         int id = 0;
         CHANNEL.registerMessage(id++, SyncCharacterDataPacket.class, SyncCharacterDataPacket::encode, SyncCharacterDataPacket::decode, SyncCharacterDataPacket::handle);
         CHANNEL.registerMessage(id++, OpenCharacterScreenPacket.class, OpenCharacterScreenPacket::encode, OpenCharacterScreenPacket::decode, OpenCharacterScreenPacket::handle);
-        CHANNEL.registerMessage(id, UpdateAgePacket.class, UpdateAgePacket::encode, UpdateAgePacket::decode, UpdateAgePacket::handle);
+        CHANNEL.registerMessage(id++, UpdateAgePacket.class, UpdateAgePacket::encode, UpdateAgePacket::decode, UpdateAgePacket::handle);
+        CHANNEL.registerMessage(id++, OpenCharacterCreationPacket.class, OpenCharacterCreationPacket::encode, OpenCharacterCreationPacket::decode, OpenCharacterCreationPacket::handle);
+        CHANNEL.registerMessage(id, SubmitCharacterCreationPacket.class, SubmitCharacterCreationPacket::encode, SubmitCharacterCreationPacket::decode, SubmitCharacterCreationPacket::handle);
     }
 }

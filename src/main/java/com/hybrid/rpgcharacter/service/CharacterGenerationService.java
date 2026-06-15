@@ -18,20 +18,32 @@ public class CharacterGenerationService {
         this.traitLimitService = traitLimitService;
     }
 
-    /** Initializes a profile if it was never generated before. */
+    /** Initializes a profile with random player-facing choices if it was never generated before. */
     public CharacterData initializeIfNeeded(ServerPlayer player, CharacterData existing) {
         if (existing.isInitialized()) {
             return existing;
         }
         UUID id = player.getUUID();
         Random random = new Random(id.getMostSignificantBits() ^ System.nanoTime());
+        Gender gender = random.nextBoolean() ? Gender.MALE : Gender.FEMALE;
+        BodyType bodyType = BodyType.values()[random.nextInt(BodyType.values().length)];
+        return initializeWithChoices(player, existing, player.getGameProfile().getName(), gender, bodyType);
+    }
+
+    /** Initializes a profile from the first-login creation screen and refuses regeneration. */
+    public CharacterData initializeWithChoices(ServerPlayer player, CharacterData existing, String characterName, Gender gender, BodyType bodyType) {
+        if (existing.isInitialized()) {
+            return existing;
+        }
+        UUID id = player.getUUID();
+        Random random = new Random(id.getMostSignificantBits() ^ System.nanoTime());
         existing.setPlayerId(id);
-        existing.setCharacterName(player.getGameProfile().getName());
+        existing.setCharacterName(sanitizeName(characterName, player.getGameProfile().getName()));
         existing.setGeneticsSeed(random.nextLong());
         Random genetics = new Random(existing.getGeneticsSeed());
-        existing.setGender(genetics.nextBoolean() ? Gender.MALE : Gender.FEMALE);
+        existing.setGender(gender);
         existing.setGeneticsFactor(generateGeneticsFactor(genetics));
-        existing.setBodyType(BodyType.values()[genetics.nextInt(BodyType.values().length)]);
+        existing.setBodyType(bodyType);
         maybeAssignRareTrait(existing, genetics);
         existing.setAge(16);
         existing.setHeightCm(heightService.calculateHeight(existing.getGender(), existing.getAge(), existing.getGeneticsFactor(), existing.getTraits()));
@@ -39,6 +51,14 @@ public class CharacterGenerationService {
         existing.setWeightKg(calculateInitialWeight(existing));
         existing.setInitialized(true);
         return existing;
+    }
+
+    private String sanitizeName(String requestedName, String fallbackName) {
+        String trimmed = requestedName == null ? "" : requestedName.trim();
+        if (trimmed.isEmpty()) {
+            return fallbackName;
+        }
+        return trimmed.length() > 32 ? trimmed.substring(0, 32) : trimmed;
     }
 
     private float generateGeneticsFactor(Random random) {

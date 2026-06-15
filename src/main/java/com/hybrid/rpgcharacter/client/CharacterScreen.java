@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/** Basic Forge GUI for inspecting synced character data. */
+/** Polished Forge GUI for inspecting synced character data. */
 public class CharacterScreen extends Screen {
     private final CharacterData data;
 
@@ -18,41 +18,54 @@ public class CharacterScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
-        int x = width / 2 - 100;
-        int y = 32;
-        graphics.drawCenteredString(font, title, width / 2, y, 0xF5D28A);
+        int panelWidth = 286;
+        int panelHeight = 194;
+        int panelX = width / 2 - panelWidth / 2;
+        int panelY = height / 2 - panelHeight / 2;
+        drawPanel(graphics, panelX, panelY, panelWidth, panelHeight);
+        graphics.drawCenteredString(font, title, width / 2, panelY + 14, 0xF5D28A);
         if (data == null) {
-            graphics.drawString(font, Component.translatable("screen.rpgcharacter.no_data"), x, y + 24, 0xFFFFFF);
+            graphics.drawCenteredString(font, Component.translatable("screen.rpgcharacter.no_data"), width / 2, panelY + 84, 0xFFFFFF);
             super.render(graphics, mouseX, mouseY, partialTick);
             return;
         }
-        drawLine(graphics, "name", data.getCharacterName(), x, y += 24);
-        drawLine(graphics, "age", String.valueOf(data.getAge()), x, y += 12);
-        drawLine(graphics, "gender", data.getGender().name(), x, y += 12);
-        drawLine(graphics, "height", data.getHeightCm() + " cm", x, y += 12);
-        drawLine(graphics, "weight", String.format("%.1f kg", data.getWeightKg()), x, y += 12);
-        drawLine(graphics, "body_type", data.getBodyType().name(), x, y += 12);
-        drawLine(graphics, "traits", data.getTraits().toString(), x, y += 12);
-        drawProgress(graphics, x, y + 18);
-        drawPlaceholderIcons(graphics, x, y + 34);
+        int leftX = panelX + 22;
+        int rightX = panelX + 148;
+        int y = panelY + 38;
+        drawStat(graphics, leftX, y, "name", data.getCharacterName());
+        drawStat(graphics, rightX, y, "age", String.valueOf(data.getAge()));
+        drawStat(graphics, leftX, y + 28, "gender", Component.translatable("screen.rpgcharacter.gender." + data.getGender().name().toLowerCase()).getString());
+        drawStat(graphics, rightX, y + 28, "height", data.getHeightCm() + " cm");
+        drawStat(graphics, leftX, y + 56, "weight", String.format("%.1f kg", data.getWeightKg()));
+        drawStat(graphics, rightX, y + 56, "body_type", Component.translatable("screen.rpgcharacter.body." + data.getBodyType().name().toLowerCase()).getString());
+        drawWideStat(graphics, panelX + 22, y + 88, "traits", data.getTraits().toString());
+        drawProgress(graphics, panelX + 22, panelY + 160, panelWidth - 44);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    private void drawLine(GuiGraphics graphics, String key, String value, int x, int y) {
-        graphics.drawString(font, Component.translatable("screen.rpgcharacter." + key).append(": " + value), x, y, 0xFFFFFF);
+    private void drawPanel(GuiGraphics graphics, int x, int y, int width, int height) {
+        graphics.fill(x, y, x + width, y + height, 0xE61B1712);
+        graphics.fill(x + 3, y + 3, x + width - 3, y + height - 3, 0xCC33271A);
+        graphics.fill(x + 8, y + 28, x + width - 8, y + 29, 0xFF7A5A34);
     }
 
-    private void drawProgress(GuiGraphics graphics, int x, int y) {
+    private void drawStat(GuiGraphics graphics, int x, int y, String key, String value) {
+        graphics.fill(x - 4, y - 3, x + 112, y + 21, 0x66302016);
+        graphics.drawString(font, Component.translatable("screen.rpgcharacter." + key), x, y, 0xBFA37A);
+        graphics.drawString(font, value, x, y + 10, 0xFFFFFF);
+    }
+
+    private void drawWideStat(GuiGraphics graphics, int x, int y, String key, String value) {
+        graphics.fill(x - 4, y - 3, x + 242, y + 21, 0x66302016);
+        graphics.drawString(font, Component.translatable("screen.rpgcharacter." + key), x, y, 0xBFA37A);
+        graphics.drawString(font, value, x, y + 10, 0xFFFFFF);
+    }
+
+    private void drawProgress(GuiGraphics graphics, int x, int y, int width) {
         long threshold = Math.max(1L, CharacterConfig.AGE_PROGRESS_THRESHOLD.get());
-        int filled = (int) Math.min(100L, data.getAgeProgress() * 100L / threshold);
-        graphics.fill(x, y, x + 102, y + 8, 0xFF2A1D14);
-        graphics.fill(x + 1, y + 1, x + 1 + filled, y + 7, 0xFF7BC46A);
-        graphics.drawString(font, Component.translatable("screen.rpgcharacter.age_progress"), x, y - 10, 0xFFFFFF);
-    }
-
-    private void drawPlaceholderIcons(GuiGraphics graphics, int x, int y) {
-        for (int i = 0; i < 4; i++) {
-            graphics.fill(x + i * 18, y, x + i * 18 + 14, y + 14, 0xFF6B5940);
-        }
+        int filled = (int) Math.min(width - 2L, data.getAgeProgress() * (width - 2L) / threshold);
+        graphics.drawString(font, Component.translatable("screen.rpgcharacter.age_progress"), x, y - 12, 0xFFFFFF);
+        graphics.fill(x, y, x + width, y + 10, 0xFF20140D);
+        graphics.fill(x + 1, y + 1, x + 1 + filled, y + 9, 0xFF80B95A);
     }
 }

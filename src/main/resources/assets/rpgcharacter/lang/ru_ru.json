@@ -13,5 +13,16 @@
   "commands.character_test.sync": "Данные персонажа синхронизированы для %s.",
   "commands.character_test.add_age": "Добавлено лет: %s для %s. Новый возраст: %s.",
   "key.categories.rpgcharacter": "RPG Character",
-  "key.rpgcharacter.open_character_screen": "Открыть окно персонажа"
+  "key.rpgcharacter.open_character_screen": "Открыть окно персонажа",
+  "screen.rpgcharacter.creation.title": "Создание персонажа",
+  "screen.rpgcharacter.creation.name": "Имя персонажа",
+  "screen.rpgcharacter.creation.gender": "Пол: %s",
+  "screen.rpgcharacter.creation.body": "Телосложение: %s",
+  "screen.rpgcharacter.creation.confirm": "Создать персонажа",
+  "screen.rpgcharacter.gender.male": "Мужской",
+  "screen.rpgcharacter.gender.female": "Женский",
+  "screen.rpgcharacter.body.thin": "Худощавое",
+  "screen.rpgcharacter.body.normal": "Обычное",
+  "screen.rpgcharacter.body.athletic": "Атлетичное",
+  "screen.rpgcharacter.body.heavy": "Крупное"
 }
