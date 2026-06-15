@@ -12,6 +12,6 @@
   "commands.character_test.open": "Opened character screen for %s.",
   "commands.character_test.sync": "Synchronized character data for %s.",
   "commands.character_test.add_age": "Added %s years to %s. New age: %s.",
-  "key.categories.epicfight": "Epic Fight",
-  "key.epicfight.open_character_screen": "Open character screen"
+  "key.categories.rpgcharacter": "RPG Character",
+  "key.rpgcharacter.open_character_screen": "Open character screen"
 }

@@ -12,6 +12,6 @@
   "commands.character_test.open": "Открыто окно персонажа для %s.",
   "commands.character_test.sync": "Данные персонажа синхронизированы для %s.",
   "commands.character_test.add_age": "Добавлено лет: %s для %s. Новый возраст: %s.",
-  "key.categories.epicfight": "Epic Fight",
-  "key.epicfight.open_character_screen": "Открыть окно персонажа"
+  "key.categories.rpgcharacter": "RPG Character",
+  "key.rpgcharacter.open_character_screen": "Открыть окно персонажа"
 }

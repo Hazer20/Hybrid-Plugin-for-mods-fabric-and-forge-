@@ -5,33 +5,30 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.common.MinecraftForge;
 import org.lwjgl.glfw.GLFW;
 
 /** Client-only hooks for opening the character screen with a configurable key binding. */
 public class CharacterClientEvents {
     private static final KeyMapping OPEN_CHARACTER_SCREEN = new KeyMapping(
-            "key.epicfight.open_character_screen",
+            "key.rpgcharacter.open_character_screen",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_V,
-            "key.categories.epicfight");
+            "key.categories.rpgcharacter");
 
-    /** Registers this client hook on both the mod and Forge event buses. */
+    /** Registers each client hook on the event bus that owns its event type. */
     public static void register(IEventBus modEventBus) {
         CharacterClientEvents handler = new CharacterClientEvents();
-        modEventBus.register(handler);
-        MinecraftForge.EVENT_BUS.register(handler);
+        modEventBus.addListener(handler::onRegisterKeyMappings);
+        MinecraftForge.EVENT_BUS.addListener(handler::onClientTick);
     }
 
-    @SubscribeEvent
     public void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(OPEN_CHARACTER_SCREEN);
     }
 
-    @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;

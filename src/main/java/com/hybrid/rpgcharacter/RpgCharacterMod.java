@@ -18,7 +18,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 /** Main entry point for the medieval RPG character foundation mod. */
 @Mod(RpgCharacterMod.MOD_ID)
 public final class RpgCharacterMod {
-    public static final String MOD_ID = "epicfight";
+    public static final String MOD_ID = "rpgcharacter";
 
     public RpgCharacterMod() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, CharacterConfig.SERVER_SPEC);
