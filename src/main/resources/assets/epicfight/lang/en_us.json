@@ -8,5 +8,9 @@
   "screen.rpgcharacter.weight": "Weight",
   "screen.rpgcharacter.body_type": "Body type",
   "screen.rpgcharacter.traits": "Traits",
-  "screen.rpgcharacter.age_progress": "Age progress"
+  "screen.rpgcharacter.age_progress": "Age progress",
+  "button.epicfight.character": "Character",
+  "commands.character_test.open": "Opened character screen for %s.",
+  "commands.character_test.sync": "Synchronized character data for %s.",
+  "commands.character_test.add_age": "Added %s years to %s. New age: %s."
 }

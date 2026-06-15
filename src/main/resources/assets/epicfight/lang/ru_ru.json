@@ -8,5 +8,9 @@
   "screen.rpgcharacter.weight": "Вес",
   "screen.rpgcharacter.body_type": "Телосложение",
   "screen.rpgcharacter.traits": "Особенности",
-  "screen.rpgcharacter.age_progress": "Прогресс взросления"
+  "screen.rpgcharacter.age_progress": "Прогресс взросления",
+  "button.epicfight.character": "Персонаж",
+  "commands.character_test.open": "Открыто окно персонажа для %s.",
+  "commands.character_test.sync": "Данные персонажа синхронизированы для %s.",
+  "commands.character_test.add_age": "Добавлено лет: %s для %s. Новый возраст: %s."
 }
