@@ -1,0 +1,12 @@
+{
+  "screen.rpgcharacter.character": "Персонаж",
+  "screen.rpgcharacter.no_data": "Данные персонажа ещё не синхронизированы.",
+  "screen.rpgcharacter.name": "Имя",
+  "screen.rpgcharacter.age": "Возраст",
+  "screen.rpgcharacter.gender": "Пол",
+  "screen.rpgcharacter.height": "Рост",
+  "screen.rpgcharacter.weight": "Вес",
+  "screen.rpgcharacter.body_type": "Телосложение",
+  "screen.rpgcharacter.traits": "Особенности",
+  "screen.rpgcharacter.age_progress": "Прогресс взросления"
+}

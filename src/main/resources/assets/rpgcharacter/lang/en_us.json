@@ -1,0 +1,12 @@
+{
+  "screen.rpgcharacter.character": "Character",
+  "screen.rpgcharacter.no_data": "Character data is not synchronized yet.",
+  "screen.rpgcharacter.name": "Name",
+  "screen.rpgcharacter.age": "Age",
+  "screen.rpgcharacter.gender": "Gender",
+  "screen.rpgcharacter.height": "Height",
+  "screen.rpgcharacter.weight": "Weight",
+  "screen.rpgcharacter.body_type": "Body type",
+  "screen.rpgcharacter.traits": "Traits",
+  "screen.rpgcharacter.age_progress": "Age progress"
+}
