@@ -1,0 +1,1 @@
+package com.example.cinematicscenes.dialogue; public record DialogueLine(String speaker,String text,int charactersPerSecond) { public DialogueLine(String speaker,String text){this(speaker,text,35);} }

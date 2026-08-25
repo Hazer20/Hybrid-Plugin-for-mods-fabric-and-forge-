@@ -1,0 +1,1 @@
+package com.example.cinematicscenes.event; import com.example.cinematicscenes.scene.SceneContext; public record CameraShakeEvent(float intensity,int ticks,int frequency) implements SceneEvent { public void start(SceneContext c){c.camera.shake(intensity,ticks,frequency);} public void update(SceneContext c,float p){} public void finish(SceneContext c){} }

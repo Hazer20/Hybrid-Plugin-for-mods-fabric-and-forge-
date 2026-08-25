@@ -1,0 +1,1 @@
+package com.example.cinematicscenes.audio; import net.minecraft.client.Minecraft; import net.minecraft.sounds.SoundEvent; import net.minecraft.sounds.SoundSource; public final class SceneAudioManager { public void play(SoundEvent sound){var p=Minecraft.getInstance().player;if(p!=null)p.playSound(sound,1f,1f);} public void stopAll(){} }

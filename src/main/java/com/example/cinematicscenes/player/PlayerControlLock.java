@@ -1,0 +1,1 @@
+package com.example.cinematicscenes.player; import net.minecraft.client.player.LocalPlayer; public final class PlayerControlLock { private boolean wasNoPhysics; public void lock(LocalPlayer p){wasNoPhysics=p.noPhysics;p.noPhysics=true;} public void restore(LocalPlayer p){p.noPhysics=wasNoPhysics;} }
