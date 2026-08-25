@@ -1,0 +1,1 @@
+package com.example.cinematicscenes.dialogue; public final class DialogueManager { private Dialogue active; public void show(Dialogue dialogue){active=dialogue;} public Dialogue active(){return active;} public void clear(){active=null;} }

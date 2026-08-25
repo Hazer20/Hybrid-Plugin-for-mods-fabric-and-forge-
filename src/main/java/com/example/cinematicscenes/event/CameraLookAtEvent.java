@@ -1,0 +1,1 @@
+package com.example.cinematicscenes.event; import com.example.cinematicscenes.scene.SceneContext; import net.minecraft.world.phys.Vec3; public record CameraLookAtEvent(Vec3 target,int ticks) implements SceneEvent { public void start(SceneContext c){c.camera.lookAt(target,ticks);} public void update(SceneContext c,float p){} public void finish(SceneContext c){} }

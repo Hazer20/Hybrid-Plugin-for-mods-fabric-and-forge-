@@ -1,0 +1,1 @@
+package com.example.cinematicscenes.event; import com.example.cinematicscenes.scene.SceneContext; public final class WaitEvent implements SceneEvent { public void start(SceneContext c){} public void update(SceneContext c,float p){} public void finish(SceneContext c){} }
